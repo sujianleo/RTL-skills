@@ -18,6 +18,7 @@ Use this skill to write or refactor synchronous RTL by deriving behavior first a
 - `references/arbiter.md`: fairness policy, grant timing, and backpressure interaction.
 - `references/fsm.md`: state decomposition, transition rules, and output strategy.
 - `references/zero-base-design-note.md`: universal Markdown explanation framework for designing any RTL module from first principles.
+- `references/vibe-soc.md`: SoC project scaffold reference based on `siliconpeasant/vibe_soc`.
 
 ## Core Method
 
