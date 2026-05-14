@@ -17,6 +17,7 @@ Use this skill to write or refactor synchronous RTL by deriving behavior first a
 - `references/fifo.md`: pointer logic, full or empty generation, and simultaneous push or pop.
 - `references/arbiter.md`: fairness policy, grant timing, and backpressure interaction.
 - `references/fsm.md`: state decomposition, transition rules, and output strategy.
+- `references/zero-base-design-note.md`: universal Markdown explanation framework for designing any RTL module from first principles.
 
 ## Core Method
 
@@ -52,7 +53,25 @@ If the register meaning cannot be explained in one sentence, its update logic is
 8. Data-path priority.
 9. Meaningful event wires only.
 10. RTL implementation.
-11. Final signal-by-signal RTL check.
+11. Human-readable Markdown design note.
+12. Final signal-by-signal RTL check.
+
+## Markdown Design Notes
+
+For any non-trivial RTL module, create or update a companion `.md` design note alongside the RTL or under the repository's docs area. The note is not a code dump; it should teach a human with near-zero RTL background how to derive the module.
+
+Use the framework in `references/zero-base-design-note.md` and keep these rules:
+
+1. Start from the real-world job of the module, not from signals or `always` blocks.
+2. Define the two or more sides that may disagree in timing, ownership, rate, ordering, or response latency.
+3. Explain the smallest storage needed by asking what facts must survive into a later cycle.
+4. Walk through the key scenarios in cycle language: first transfer, steady flow, stall, release, boundary full/empty, simultaneous consume/refill, and error/timeout when relevant.
+5. Map each stored fact to the exact register that remembers it, then give set, clear, and hold rules.
+6. Name meaningful event wires only after the behavior is clear.
+7. Link every WaveDrom file that supports the explanation, and keep the prose as the place for longer cause/effect explanation.
+8. End with a design checklist that a reader can reuse for a different module.
+
+The note should be written in plain Chinese by default unless the user or repository asks otherwise. Prefer patient, zero-base explanations over compact expert shorthand.
 
 ## WaveDrom Timing Diagrams
 
@@ -141,6 +160,7 @@ What to avoid in `模块原理`:
 - For explanations aimed at learning or review, use通俗的推导口吻: 先讲遇到的问题，再讲为什么需要这个寄存器，最后讲它防住了什么错。
 - Prefer "第 N 拍 / 第 N+1 拍" or "先占座 / 再回填 / 后消费" style timing stories for cross-cycle behavior.
 - When using that cycle-by-cycle timing style, also provide the matching WaveDrom JSON files and mention their paths near the prose.
+- For non-trivial RTL work, also provide or update a Markdown design note that teaches the module from zero using the universal framework.
 - Keep delivered RTL synthesizable unless the user explicitly asks for checks.
 - By default, use Chinese RTL comments.
 - When adding explanatory comments, include a detailed `模块原理` section so the reader sees the core structure before the register-by-register derivation.
