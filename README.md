@@ -5,7 +5,8 @@ Backup of reusable Codex RTL design skills.
 ## Contents
 
 - `skills/rtl-module-design/SKILL.md`: main RTL module design skill.
-- `skills/rtl-module-design/references/`: reusable reference pages for module templates, handshake paths, FIFOs, arbiters, and FSMs.
+- `skills/rtl-module-design/references/`: reusable reference pages for module templates, handshake paths, FIFOs, arbiters, FSMs, and SoC scaffolding examples.
+- `skills/rtl-module-design/references/vibe-soc.md`: `siliconpeasant/vibe_soc` reference note for SoC project organization, filelists, module layout, and top integration.
 
 ## Source
 
