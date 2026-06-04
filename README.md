@@ -25,12 +25,12 @@ Codex skills for RTL design, notes, WaveDrom diagrams, and Verilator checks.
 | `rtl-wavedrom` | Draw or check RTL timing diagrams. |
 | `rtl-check` | Run lint, syntax checks, or small directed simulations. |
 
-## Install
+## Install All Skills
 
-Run from the repository root:
+Run from the repository root. This installs every skill under `skills/`:
 
 ```sh
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills" && cp -R skills/rtl-design skills/rtl-note skills/rtl-wavedrom skills/rtl-check "${CODEX_HOME:-$HOME/.codex}/skills/"
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills" && cp -R skills/* "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
 ## Contents
