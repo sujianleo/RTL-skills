@@ -1,5 +1,5 @@
 ---
-name: rtl-design-note
+name: rtl-note
 description: Use this skill to create or update a human-readable Markdown design note for an RTL module. The note teaches the module from first principles, explains timing hazards, derives registers as cross-cycle facts, and links related WaveDrom scenario files.
 metadata:
   source: "RTL skill set"

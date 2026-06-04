@@ -53,7 +53,7 @@ Do not overuse this skill for:
 - pure testbench work
 - pure documentation without RTL logic changes
 
-For pure design notes, use `rtl-design-note`.
+For pure design notes, use `rtl-note`.
 For WaveDrom timing diagrams, use `rtl-wavedrom`.
 For Verilator lint or small directed checks, use `rtl-check`.
 
@@ -95,7 +95,7 @@ Use for non-trivial FIFO, arbiter, bus bridge, request/response datapath, CDC-ad
 Deliver:
 
 1. everything in Standard Mode
-2. companion Markdown design note, or clear instruction to use `rtl-design-note`
+2. companion Markdown design note, or clear instruction to use `rtl-note`
 3. WaveDrom scenario files, or clear instruction to use `rtl-wavedrom`
 4. lint/simulation commands, or clear instruction to use `rtl-check`
 
@@ -351,7 +351,7 @@ For each important signal, ask:
 
 ## When to Call Other Skills
 
-Use `rtl-design-note` when the user asks for:
+Use `rtl-note` when the user asks for:
 
 - companion `.md`
 - zero-base explanation

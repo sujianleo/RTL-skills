@@ -43,7 +43,7 @@ Use this skill when the user asks for:
 
 Do not use this skill for RTL code generation. Use `rtl-design`.
 
-Do not use this skill for pure design prose. Use `rtl-design-note`.
+Do not use this skill for pure design prose. Use `rtl-note`.
 
 Do not use this skill for lint/simulation commands. Use `rtl-check`.
 
@@ -275,6 +275,6 @@ If uncertain, create a tiny directed simulation scenario with `rtl-check`.
 
 Use `rtl-design` if the RTL needs to be written or fixed.
 
-Use `rtl-design-note` if the diagram needs a companion explanation.
+Use `rtl-note` if the diagram needs a companion explanation.
 
 Use `rtl-check` if the diagram should be validated by lint or directed simulation.
