@@ -6,6 +6,7 @@ Reusable Codex skills for RTL design, documentation, timing diagrams, and Verila
 
 - `skills/rtl-design/`: main synthesizable RTL design and refactor skill.
 - `skills/rtl-design/references/`: shared RTL references for module templates, handshake paths, FIFOs, arbiters, FSMs, and zero-base design notes.
+- `skills/rtl-design/examples/`: concrete RTL code examples for valid/ready, CDC, FIFO, reset, arbiter, strobe, pulse, debounce, and scan patterns.
 - `skills/rtl-design-note/`: Markdown design-note skill for review-friendly RTL explanations.
 - `skills/rtl-wavedrom/`: WaveDrom `.wave.json` timing-diagram skill.
 - `skills/rtl-check/`: Verilator lint and small directed simulation skill.

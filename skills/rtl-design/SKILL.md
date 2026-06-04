@@ -23,6 +23,18 @@ Keep these references available. Do not remove or rename them.
 - `references/fsm.md`: state decomposition, transition rules, and output strategy.
 - `references/zero-base-design-note.md`: universal Markdown explanation framework for designing any RTL module from first principles.
 
+## Code Examples
+
+Use `examples/` only as concrete RTL patterns after the behavior has already been derived from the references.
+
+- `examples/skid.md`, `examples/reg_slice.md`, `examples/vr_stage.md`: valid/ready buffering patterns.
+- `examples/cdc_toggle.md`, `examples/toggle_pulse_cdc.md`, `examples/req_ack.md`, `examples/req_ack_4phase.md`: CDC event-transfer patterns.
+- `examples/async_fifo.md`: minimal Gray-pointer async FIFO.
+- `examples/rst_sync.md`: async assert, sync deassert reset synchronizer.
+- `examples/rr_arb.md`: round-robin arbiter.
+- `examples/strobe.md`, `examples/strobe_hold_tx.md`: one-way strobe/data patterns.
+- `examples/pulse_width_det.md`, `examples/debounce_filter.md`, `examples/nand_tree.md`: small reusable RTL blocks.
+
 ## Trigger This Skill When
 
 Use this skill for:
