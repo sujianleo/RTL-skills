@@ -1,5 +1,3 @@
-# FSM Design
-
 ## Contents
 
 1. State-first questions

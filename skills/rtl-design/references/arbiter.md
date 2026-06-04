@@ -1,5 +1,3 @@
-# Arbiter Design
-
 ## Contents
 
 1. Policy-first questions

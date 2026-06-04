@@ -1,5 +1,3 @@
-# FIFO Design
-
 ## Contents
 
 1. Module-first questions
@@ -36,7 +34,6 @@ Use one of these patterns:
 3. Read/write pointer plus explicit empty/full flags
 
 Prefer pointer + count for readability when depth is modest and timing is not critical.
-
 Prefer wrap-bit schemes when matching common hardware implementation patterns matters.
 
 ## Behavioral Derivation Order
@@ -85,7 +82,6 @@ For first-word fall-through FIFO:
 ### Full and Empty
 
 `empty` should answer whether a pop can legally occur.
-
 `full` should answer whether a push can legally occur.
 
 When simultaneous push/pop occurs:

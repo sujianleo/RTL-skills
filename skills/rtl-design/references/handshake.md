@@ -1,5 +1,3 @@
-# Handshake Data Paths
-
 ## Contents
 
 1. Port semantics

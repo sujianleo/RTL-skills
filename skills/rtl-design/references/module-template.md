@@ -1,5 +1,3 @@
-# RTL Module Template
-
 ## Purpose
 
 Use this template when designing any new synchronous RTL module from scratch or when refactoring a messy module into a clearer structure.
@@ -19,7 +17,7 @@ If these answers are unclear, the RTL is not ready to be written.
 
 ## Fill-In Template
 
-```text
+```plain text
 [Module Name]
 ____________________________
 
@@ -160,7 +158,7 @@ At minimum, comment these when present:
 If the user wants synthesizable RTL only, omit non-synthesizable helpers such as:
 
 - `initial` parameter checks
-- ``ifndef SYNTHESIS` guarded logic
+- `` `ifndef SYNTHESIS`` guarded logic
 - `$error` / assertion-only checker blocks
 
 ## Working Order
@@ -190,6 +188,11 @@ Use this order every time:
 - Keep the design-derivation phase separate from the RTL implementation phase: first explain behavior, then name event wires.
 - If the user asks for RTL output, default to returning only code blocks; avoid extra explanatory prose outside the code unless explicitly requested.
 
+## Notion Export Rule
+
+- If this template is exported to Notion as code, use the `verilog` fence directly.
+- Do not export this template to Notion as `systemverilog` or `javascript`.
+- If many code pages are placed under one Notion index page, keep them flat on that page rather than creating extra grouping pages.
 - Separate different code types with `---`.
 - Use colored headings to distinguish code types, without adding extra explanatory prose around those headings.
 
