@@ -43,7 +43,7 @@ Do not overuse this skill for:
 
 For pure design notes, use `rtl-design-note`.
 For WaveDrom timing diagrams, use `rtl-wavedrom`.
-For Verilator lint or small directed checks, use `rtl-verilator-check`.
+For Verilator lint or small directed checks, use `rtl-check`.
 
 ## Output Level
 
@@ -85,7 +85,7 @@ Deliver:
 1. everything in Standard Mode
 2. companion Markdown design note, or clear instruction to use `rtl-design-note`
 3. WaveDrom scenario files, or clear instruction to use `rtl-wavedrom`
-4. lint/simulation commands, or clear instruction to use `rtl-verilator-check`
+4. lint/simulation commands, or clear instruction to use `rtl-check`
 
 Do not generate extra files unless the user asks, the repository convention requires them, or the module is complex enough that the extra file materially helps.
 
@@ -353,7 +353,7 @@ Use `rtl-wavedrom` when the user asks for:
 - cycle N / N+1 explanation
 - alignment, stall, response wait, simultaneous push/pop visualization
 
-Use `rtl-verilator-check` when the user asks for:
+Use `rtl-check` when the user asks for:
 
 - lint
 - syntax check

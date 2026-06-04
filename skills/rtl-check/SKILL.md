@@ -1,5 +1,5 @@
 ---
-name: rtl-verilator-check
+name: rtl-check
 description: Use this skill to run or propose Verilator-based RTL syntax checks, lint checks, and small directed simulations for synthesizable RTL modules and timing scenarios. Prefer Verilator by default, but allow VCS or Xcelium when the design depends on unsupported simulator-specific behavior.
 metadata:
   source: "RTL skill set"

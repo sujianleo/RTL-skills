@@ -280,4 +280,4 @@ Use `rtl-design` if RTL code needs to be written or changed.
 
 Use `rtl-wavedrom` if timing diagrams need to be created or validated.
 
-Use `rtl-verilator-check` if lint, syntax check, or directed simulation is needed.
+Use `rtl-check` if lint, syntax check, or directed simulation is needed.
