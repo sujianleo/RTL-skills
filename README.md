@@ -1,4 +1,4 @@
-# RTL Skills
+# Codex RTL Skills
 
 ```text
 ██████╗ ████████╗██╗
@@ -11,32 +11,27 @@
 
 Codex skills for RTL design, notes, WaveDrom diagrams, and Verilator checks.
 
-## Skills
-
-| Skill | Use |
-|---|---|
-| `rtl-design` | Design or refactor synthesizable RTL. |
-| `rtl-note` | Write review-friendly RTL design notes. |
-| `rtl-wavedrom` | Draw or check RTL timing diagrams. |
-| `rtl-check` | Run lint, syntax checks, or small directed simulations. |
-
-## Install All Skills
-
-Run from the repository root. This installs every skill under `skills/`:
+## Install
 
 ```sh
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills" && cp -R skills/* "${CODEX_HOME:-$HOME/.codex}/skills/"
+curl -fsSL https://raw.githubusercontent.com/sujianleo/RTL-skills/main/install.sh | sh
 ```
 
-## Contents
-
-- `skills/rtl-design/references/`: design rules and checklists.
-- `skills/rtl-design/examples/`: small RTL reference examples.
-
-## Principle
+Default install path:
 
 ```text
-derive behavior first, then write RTL
+~/.codex/skills
 ```
 
-Each register should have a clear fact, set event, clear event, and hold rule.
+Custom install path:
+
+```sh
+CODEX_HOME=/path/to/.codex curl -fsSL https://raw.githubusercontent.com/sujianleo/RTL-skills/main/install.sh | sh
+```
+
+## Skills
+
+- `rtl-design`: design or refactor synthesizable RTL.
+- `rtl-note`: write RTL design notes.
+- `rtl-wavedrom`: draw RTL timing diagrams.
+- `rtl-check`: run lint and small directed checks.
