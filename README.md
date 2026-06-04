@@ -1,17 +1,12 @@
 # RTL Skills
 
 ```text
-+----------------------------------------------------------------+
-| RRRRRRRRRR   TTTTTTTTTTTT   LL                                 |
-| RR      RR       TTT        LL                                 |
-| RR      RR       TTT        LL                                 |
-| RRRRRRRRR        TTT        LL                                 |
-| RR    RR         TTT        LL                                 |
-| RR     RR        TTT        LL                                 |
-| RR      RR       TTT        LLLLLLLLLLLL                       |
-|                                                                |
-|          behavior -> facts -> registers -> RTL                 |
-+----------------------------------------------------------------+
+██████╗ ████████╗██╗
+██╔══██╗╚══██╔══╝██║
+██████╔╝   ██║   ██║
+██╔══██╗   ██║   ██║
+██║  ██║   ██║   ███████╗
+╚═╝  ╚═╝   ╚═╝   ╚══════╝
 ```
 
 Codex skills for RTL design, notes, WaveDrom diagrams, and Verilator checks.
