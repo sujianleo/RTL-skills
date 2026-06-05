@@ -1,235 +1,356 @@
 ---
 name: rtl-note
-description: Use this skill to create or update a human-readable Markdown design note for an RTL module. The note teaches the module from first principles, explains timing hazards, derives registers as cross-cycle facts, and links related timing diagrams.
+description: Use this skill to create fast RTL learning notes from existing RTL code. The note explains the module through five essentials: facts, events, priority, boundaries, and contracts. Useful for code reading, review, interview preparation, and reinforcement learning.
 metadata:
   source: "RTL skill set"
   category: rtl
 ---
-
 # RTL Design Note
 
-Use this skill to write or update a companion Markdown design note for an RTL module.
+Use this skill to quickly understand existing RTL code and turn it into a reusable learning note.
 
-A design note is not a port list and not a code dump. It should teach how the RTL behavior is derived from interface contracts, timing hazards, cross-cycle facts, and register update rules.
+Core idea:
+
+```text
+Read RTL = find facts -> find events -> find priority -> find boundaries -> find contracts
+```
+
+This skill is not for writing new RTL.
+It is for understanding, reviewing, and remembering RTL.
 
 Default language: plain Chinese.
 
-## When To Use
+## 1. Purpose
+
+The note should help the reader answer:
+
+- 这个模块接收什么？
+- 它需要记住什么？
+- 什么事件会改变这些事实？
+- 同一拍多个事件谁优先？
+- 异常、阻塞、晚到、abort 怎么办？
+- 它和外部模块如何交接责任？
+
+The final note should be usable for:
+
+- code review
+- quick onboarding
+- interview explanation
+- design replay
+- self-test / reinforcement learning
+
+## 2. When To Use
 
 Use this skill when the user asks for:
 
-- RTL design note or companion `.md`
-- module principle or zero-base explanation
-- review-friendly RTL explanation
-- explanation of register meaning, set / clear / hold, and timing scenarios
+- RTL 代码讲解
+- design note
+- 快速理解模块
+- 代码 review 笔记
+- 按 5 要素拆解 RTL
+- 面试讲法
+- 强化学习/自测问题
+- companion `.md` next to RTL
 
-Do not use this skill for RTL code generation; use `rtl-design` instead. For WaveDrom use `rtl-wavedrom`. For lint or directed checks use `rtl-check`.
+Do not use this skill for pure RTL code generation. Use `rtl-design`.
 
-## Reference Guide
+Do not use this skill for pure timing diagrams. Use `rtl-wavedrom`.
 
-Reuse the RTL design references:
+Do not use this skill for lint or simulation. Use `rtl-check`.
 
-- `../rtl-design/references/module-template.md`
-- `../rtl-design/references/handshake.md`
-- `../rtl-design/references/fifo.md`
-- `../rtl-design/references/arbiter.md`
-- `../rtl-design/references/fsm.md`
-- `../rtl-design/references/zero-base-design-note.md`
+## 3. Core Five Essentials
 
-## Core Goal
+Every note should revolve around this table.
 
-The note should answer:
+| 核心 | 本质问题 | RTL 体现 | 阅读时要找什么 |
+|---|---|---|---|
+| 事实 | 这件事是否需要跨拍记住？ | register / flag / counter / state | 哪些寄存器在保存未完成事实 |
+| 事件 | 什么发生了，导致事实成立或失效？ | fire / pulse / done / timeout | 哪些输入/组合事件改变寄存器 |
+| 优先级 | 同一拍多个事件同时发生，谁赢？ | if-else priority | reset/abort/done/start/set/clear 顺序 |
+| 边界 | 输入晚到、输出阻塞、abort/reset 怎么办？ | pending / buffer / clear | 如何防丢脉冲、防旧状态、防错配 |
+| 契约 | 模块和外部如何交接责任？ | valid-ready / req-done / level-pulse | 输入输出是 pulse 还是 level，谁负责 done |
 
-1. What job the module performs.
-2. Which two sides may disagree in timing, ownership, rate, ordering, or latency.
-3. What timing hazard appears because of that disagreement.
-4. What facts must survive into later cycles.
-5. Which register remembers each fact.
-6. When each register sets, clears, and holds.
-7. What bug the structure prevents.
-8. Which timing scenarios should be checked.
+## 4. Default Output Structure
 
-## Default Structure
-
-Use this order unless the user asks otherwise.
+Use this structure by default.
 
 ```markdown
-# <module_name> 设计说明
-
-## 1. 模块职责
-## 2. 接口语义
-## 3. 模块原理
-## 4. 关键时序场景
-## 5. 跨拍事实
-## 6. 寄存器推导
-## 7. 优先级和事件线
-## 8. WaveDrom 时序图
-## 9. RTL 对照检查
-## 10. 可复用检查表
+# <module_name> RTL 学习笔记
+## 1. 一句话职责
+## 2. 接口契约
+## 3. 五要素总表
+## 4. 主流程：input -> event -> register -> output
+## 5. 关键寄存器推导
+## 6. 同拍优先级
+## 7. 边界场景
+## 8. 典型时序故事
+## 9. 易错点 / Bug 防护
+## 10. 自测问题
 ```
 
-For small modules, keep sections short. For complex modules, keep the same order.
+For small modules, keep each section short.
+For complex modules, keep the same order.
 
-## Writing Rules
+## 5. 一句话职责
 
-Prefer concrete mechanism words:
+Start with one sentence.
+
+Template:
 
 ```text
-直通、暂存、回填、仲裁、轮转、计数、占用、释放、跨拍保留、边界吸收
+这个模块负责接收 <input/event>，在 <condition> 下记住 <fact>，并驱动 <output/action>，直到 <done/clear>。
 ```
 
-Avoid vague claims such as `提升性能`, `处理时序`, `优化逻辑`, or `使用 FSM 控制` unless the mechanism is explained.
-
-Good style:
+Example:
 
 ```text
-upstream 可能先把数据送来，但 downstream 不一定 ready。
-如果没有 data_reg，stall 期间 payload 可能被上游换掉。
-因此 valid_q 记录“有一笔数据还没被消费”，data_q 记录这笔数据本身。
+u4_lp_exit 负责接收 LFPS wake，根据 CL0s/CL1/CL2 状态选择 active direction，依次请求 LFPS response、RX restore、CL_WAKE1、clock switch，并在完成后上报 directional exit done。
 ```
 
-## 模块原理
+## 6. 接口契约
 
-For non-trivial modules, this section is mandatory and should usually be 6-12 lines.
+For each important interface, describe:
 
-Explain:
+输入：
 
-1. The storage, pipeline, or control shape.
-2. The data path in time order.
-3. The rule that decides advance, stall, refill, rotate, wrap, or retire.
-4. Which cross-cycle facts must be held.
-5. Where those facts are stored.
-6. Why this structure is needed instead of a simpler one.
-7. The latency, buffering, or control-complexity cost.
+- pulse 还是 level？
+- 是否已同步到本模块时钟域？
+- 是否可能在 busy 时到达？
+- 如果 busy 时到达，是否需要 pending？
 
-## Timing Hazard First
+输出：
 
-Before naming a solution, name the concrete problem.
+- pulse 还是 level？
+- 谁消费？
+- 是否需要保持到 done？
+- 外部 done/ack 的语义是什么？
 
-Good:
+Use a compact table:
+
+| Signal | Direction | Pulse/Level | Contract | Consumer/Producer |
+|---|---|---|---|---|
+| `req_i` | input | pulse | 请求开始一次事务，busy 时可能丢失，需要 pending | upstream |
+| `done_i` | input | pulse | 外部完成当前 request 后打一拍 | downstream |
+| `busy_o` | output | level | FSM 非 idle 时保持为 1 | upstream |
+
+## 7. 五要素总表
+
+Create a summary table.
+
+| 五要素 | 本模块中的体现 | 说明 |
+|---|---|---|
+| 事实 | `pending_wake_q` | 记录 wake 来过但还没消费 |
+| 事件 | `start_fire`, `done_pulse_i`, `timeout_fire` | 改变状态/寄存器的触发条件 |
+| 优先级 | reset > abort > done > start > hold | 同拍事件谁赢 |
+| 边界 | busy wake、skewed done、abort | 用 pending/done_seen/clear 处理 |
+| 契约 | req/done level/pulse | 外部模块必须满足的交接规则 |
+
+## 8. 主流程：input -> event -> register -> output
+
+Explain the module as a chain.
+
+Template:
 
 ```text
-写地址和写数据可能不在同一拍到达。地址先到时，模块必须记住“哪个 entry 已经被地址占用但还没填入数据”。因此需要 pending_slot 和 payload_pending。
+input arrives
+  -> event wire becomes true
+  -> register records cross-cycle fact
+  -> FSM/state phase changes
+  -> output request/assertion is driven
+  -> external done clears the fact
 ```
 
-Bad:
+Example:
 
 ```text
-使用 pending_slot 和 payload_pending 实现地址数据对齐。
+LFPS wake pulse
+  -> start_cl0s_uphy
+  -> exit_src_uphy 记录本次方向
+  -> E_WAIT_LFPS 请求 dphy_tx 发 LFPS
+  -> dphy_tx_lfps_done 后进入 E_WAIT_PRE_DATA
 ```
 
-## Cross-Cycle Fact Rule
+## 9. 关键寄存器推导
 
-Every important register must be explained as memory of one unfinished fact.
+Every important register must be explained as a remembered fact.
 
 Template:
 
 ```markdown
-### <reg_name>
-
+### `<reg_name>`
 记录的事实：
 - ...
-
 置位条件：
 - ...
-
 清除条件：
 - ...
-
 保持条件：
 - ...
-
 防止的问题：
 - ...
 ```
 
-If the register meaning cannot be written in one sentence, the RTL is probably not clean enough.
+Good example:
 
-## Key Timing Scenarios
+```markdown
+### `pending_u2d_cl0s_wake`
+记录的事实：
+- U2D 方向在 exit FSM busy 时收到过 CL0s wake，但还没有被 start 消费。
+置位条件：
+- FSM busy
+- U2D 方向仍处于 CL0s
+- U2D wake pulse 到达
+- 当前没有正在处理同一个 U2D CL0s exit
+清除条件：
+- reset / abort
+- U2D 方向已经离开 CL0s
+- `start_cl0s_uphy` 消费了这个 pending wake
+保持条件：
+- 还没被消费，且方向仍然处于 CL0s
+防止的问题：
+- FSM busy 时一拍 wake pulse 丢失
+- 旧 pending wake 在方向已退出 CL0s 后误触发
+```
 
-Pick scenarios from the module contract. Common scenarios:
+## 10. 同拍优先级
 
-- first transfer
-- steady-state flow
-- stall hold / stall release
-- simultaneous consume/refill
-- delayed payload alignment
-- read/response wait
-- FIFO full / empty boundary
-- pointer wrap
-- arbiter grant hold / rotation
-- clock-enable pause
-- flush / abort
-- timeout / error response
+Always describe priority explicitly.
 
-Use cycle language for confusing behavior:
+Template:
 
 ```text
-第 N 拍：command 到达，但 downstream 不能接收，模块先暂存 command。
-第 N+1 拍：payload 到达，pending bit 表明它属于上一拍 command。
-第 N+2 拍：downstream ready，模块送出对齐后的 command/payload。
+reset > abort/clear > consume/done > set new event > hold
 ```
 
-If a scenario needs a waveform, link a `.wave.json` generated by `rtl-wavedrom` instead of embedding long WaveDrom JSON.
+For each important register, state what happens if set and clear happen in the same cycle.
 
-## WaveDrom Link Section
+Example:
 
-Prefer links:
+```text
+pending wake 同拍 set/clear：
+- 如果 start 已经消费该方向 wake，clear 优先。
+- 如果方向已不在 CL0s，clear 优先。
+- 否则 busy 且 wake 到来时 set。
+```
+
+## 11. 边界场景
+
+Pick only real boundaries from the RTL.
+
+Common boundaries:
+
+- input pulse arrives while FSM busy
+- done pulses from two sides are skewed
+- timeout and done same cycle
+- abort during active flow
+- output request needs to hold until external done
+- state changes but external level has not cleared
+- one direction exits while the other direction remains low-power
+
+For each boundary, answer:
+
+- 没有这个处理会出什么 bug？
+- 当前 RTL 用什么结构吸收这个边界？
+
+Example:
+
+```text
+问题：
+- CL0s U2D wake 在 FSM 正在处理 D2U exit 时到来，pulse 只有一拍，可能丢失。
+结构：
+- `pending_u2d_cl0s_wake` 记录这个未消费事件。
+防止的问题：
+- U2D 方向永远无法退出 CL0s。
+```
+
+## 12. 典型时序故事
+
+Use cycle language.
+
+Template:
+
+```text
+第 N 拍：
+- 输入事件发生。
+- 哪个 event wire 为 1。
+- 哪个 register 会在时钟沿后更新。
+第 N+1 拍：
+- FSM 进入哪个状态。
+- 哪个 output 拉高。
+- 哪个 fact 继续保持。
+后续某拍：
+- done/clear 到来。
+- fact 被清除。
+- output 释放。
+```
+
+Avoid vague descriptions such as:
+
+```text
+然后 FSM 处理这个流程。
+```
+
+## 13. 易错点 / Bug 防护
+
+End with a short list.
+
+Example:
 
 ```markdown
-## 8. WaveDrom 时序图
-
-- `waves/<module>_first_transfer.wave.json`: 第一笔传输。
-- `waves/<module>_stall_hold.wave.json`: stall 时 payload 保持。
-- `waves/<module>_simul_consume_refill.wave.json`: 同拍消费和回填。
+## 易错点
+1. `CL0s_ACK` 只记录目标，不走 ACK shutdown path。
+2. `CL1/CL2` 必须两个方向都进入 low power 后，global state 才能报 CL1/CL2。
+3. `wake1_req` 如果 Phase2 外置，应保持到 clock switch done 前。
+4. async reset 分支只放 reset，同步 clear 另写 else-if。
 ```
 
-Each diagram should support one specific timing story.
+## 14. 自测问题
 
-## RTL Comparison Section
+For reinforcement learning, end with questions.
 
-End with a signal-by-signal table.
+Use direct questions:
 
 ```markdown
-## 9. RTL 对照检查
-
-| 信号/寄存器 | 类型 | 改变条件 | stall/abort 下行为 | 对应 RTL |
-|---|---|---|---|---|
-| `valid_q` | register | accept/set, consume/clear | hold | `always_ff ...` |
-| `accept_fire` | comb event | `in_valid && in_ready` | recompute | `assign ...` |
+## 自测问题
+1. 这个模块最重要的跨拍事实有哪些？
+2. 哪个寄存器防止 busy 时 pulse 丢失？
+3. 如果 done 和 timeout 同拍，谁优先？
+4. 哪个输出是 level，哪个输出是 pulse？
+5. 外部模块必须保证哪些 done/ack 语义？
+6. 如果删掉某个 pending bit，会出现什么 bug？
+7. reset、abort、normal done 的优先级是什么？
+8. 这个模块的边界条件有哪些？
 ```
 
-Check reset, flush, abort, same-cycle events, and whether payload can change while owned by another side.
+Questions should force the reader to replay the design, not memorize terms.
 
-## Reusable Checklist
+This skill is not for producing pretty documents. It is for making the reader able to answer:
 
-```markdown
-## 10. 可复用检查表
-
-- [ ] 接口契约是否先定义清楚？
-- [ ] 哪两个时序侧可能不同步？
-- [ ] 是否明确最小跨拍事实？
-- [ ] 每个寄存器是否有一句话含义？
-- [ ] 每个寄存器是否有 set / clear / hold？
-- [ ] 同拍事件优先级是否明确？
-- [ ] stall 下 payload 是否保持？
-- [ ] consume/refill 同拍是否安全？
-- [ ] full/empty/timeout/abort 边界是否安全？
-- [ ] WaveDrom 是否能追溯到 RTL 表达式？
+```text
+这个寄存器为什么存在？
+如果删掉会出什么 bug？
+哪个事件 set？
+哪个事件 clear？
+同拍谁优先？
+外部必须保证什么？
 ```
 
-## What Not To Do
+## 15. What Not To Do
 
 Do not:
 
-- paste the whole RTL as the design note
-- repeat the port list without explaining behavior
-- say `use FSM` without explaining state meaning
-- say `improves timing` without explaining which path or storage boundary
-- draw diagrams that are not traceable to RTL
-- hide important behavior only inside WaveDrom footnotes
+- paste the whole RTL as the note
+- repeat the port list without behavior
+- say uses FSM without explaining state meaning
+- say flag without saying what fact it remembers
+- say improves timing without naming the path or storage boundary
+- hide key behavior only in diagrams
 - generate long textbook background unrelated to this module
 
-## Handoff
+## 16. Handoff
 
-Use `rtl-design` if RTL code needs to be written or changed. Use `rtl-wavedrom` for timing diagrams. Use `rtl-check` for lint, syntax checks, or directed simulation.
+Use `rtl-design` if RTL needs to be written or refactored.
+
+Use `rtl-wavedrom` if a timing story needs a diagram.
+
+Use `rtl-check` if behavior should be validated by lint or directed simulation.
