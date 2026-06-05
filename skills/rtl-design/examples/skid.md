@@ -1,5 +1,15 @@
 # skid
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | `m_valid/main_reg` 记住主输出 beat，`skid_en/skid_reg` 记住阻塞边沿额外吸收的 beat。 |
+| Event | `in_fire/out_fire/take_into_skid/take_into_main/refill_main`。 |
+| Priority | reset > skid refill older beat > direct input load > consume clear > hold。 |
+| Boundary | registered ready 可能让 upstream 在 stall edge 多送 1 beat，skid slot 吸收它。 |
+| Contract | valid/ready payload 稳定，且注册型 `s_ready` 切断反向 ready 组合路径。 |
+
 ```verilog
 /*
 1. 模块一句话职责

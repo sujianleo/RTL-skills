@@ -1,5 +1,15 @@
 # vr_stage
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | stage valid/data 记住 pipeline stage 当前是否拥有一个 beat。 |
+| Event | input fire 装入 stage，output fire 消费 stage。 |
+| Priority | reset 清空；同拍 consume/refill 保持 valid 并更新 data；stall 时保持。 |
+| Boundary | downstream stall 时 stage payload 不能变化，upstream ready 受占用状态限制。 |
+| Contract | 单级 valid/ready pipeline stage，transfer 只在 fire 时发生。 |
+
 ```verilog
 /*
 1. 模块一句话职责

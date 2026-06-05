@@ -1,5 +1,15 @@
 # cdc_toggle
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | `src_tgl` 记住源域事件奇偶状态，目标域 2FF 同步链记住采样历史。 |
+| Event | `src_pulse` 触发 toggle 翻转，目标域同步链前后级不同触发 `dst_pulse`。 |
+| Priority | reset 清零优先；源域事件翻转；目标域每拍同步并组合比较。 |
+| Boundary | 单拍 pulse 不直接跨域；高密度事件可能被折叠，必须由契约限制事件间隔。 |
+| Contract | 适合低频单向事件跨域，不提供 backpressure 或每事件确认。 |
+
 ```verilog
 /*
 1. 模块一句话职责

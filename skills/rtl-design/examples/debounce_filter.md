@@ -1,5 +1,15 @@
 # debounce_filter
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | sampled level、稳定计数器和 filtered output 记住“输入是否已稳定足够久”。 |
+| Event | 输入变化重启计数，计数达到阈值后更新 filtered output。 |
+| Priority | reset > 输入变化清计数 > 计数未满继续累加 > 达阈值更新输出。 |
+| Boundary | 抖动期间不断重置计数，防止短毛刺改变输出。 |
+| Contract | 输出只在输入连续稳定达到配置周期后改变。 |
+
 ```verilog
 /*
 1. 模块职责

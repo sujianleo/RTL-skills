@@ -1,10 +1,11 @@
 ## Contents
 
 1. State-first questions
-2. State decomposition
-3. Behavioral derivation order
-4. Coding patterns
-5. Checks before finishing
+2. Five-essential FSM model
+3. State decomposition
+4. Behavioral derivation order
+5. Coding patterns
+6. Checks before finishing
 
 ## State-First Questions
 
@@ -17,6 +18,16 @@ State these items before writing RTL:
 - Is single-process, two-process, or three-process coding preferred by the codebase?
 
 If the user only says "write an FSM", first define the states in natural language before choosing an encoding.
+
+## Five-Essential FSM Model
+
+| Core | FSM Question | Typical RTL |
+|---|---|---|
+| Fact | Which phase must survive into the next cycle? | `state_q`, target/source registers, counters |
+| Event | What causes phase entry or exit? | `start_fire`, `done_fire`, `timeout_fire`, `abort_fire` |
+| Priority | Which transition wins in the same cycle? | reset > abort/timeout > completion > start > hold |
+| Boundary | What if input arrives while busy, done is skewed, or timeout races done? | pending bits, done_seen latches, explicit timeout rule |
+| Contract | Which outputs are level per state and which are one-cycle pulses? | Moore/Mealy output mapping, req/done contract |
 
 ## State Decomposition
 
@@ -39,10 +50,12 @@ Add explicit datapath registers only when information must survive across cycles
 Derive FSM logic in this order:
 
 1. Reset and initial state
-2. Transition conditions out of IDLE
-3. Steady-state behavior in each active state
-4. Exit conditions from each active state
-5. Error or recovery behavior
+2. External contract for start/done/abort/timeout
+3. Events that enter and leave each phase
+4. Facts besides state that must be remembered
+5. Same-cycle priority for competing events
+6. Steady-state behavior in each active state
+7. Error or recovery behavior
 
 For each state, answer three questions:
 

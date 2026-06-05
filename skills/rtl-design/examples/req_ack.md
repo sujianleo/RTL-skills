@@ -1,5 +1,15 @@
 # req_ack
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | source request level 记住“有一个事件尚未被 ack”，同步链记住跨域 req/ack 状态。 |
+| Event | `src_pulse` set request，dst 首次看到 request 产生 `dst_pulse`，ack 返回后 clear request。 |
+| Priority | reset > ack clear > new source event set > hold。 |
+| Boundary | request busy 时新 `src_pulse` 不形成第二个 outstanding 事务。 |
+| Contract | 单 outstanding 闭环 CDC，事件不会静默丢失但吞吐受 ack 往返限制。 |
+
 ```verilog
 /*
 1. 模块一句话职责

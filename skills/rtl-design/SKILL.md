@@ -33,6 +33,15 @@ Start from:
 | Boundary | What happens when input is late, output is blocked, abort/reset occurs? | pending / buffer / clear |
 | Contract | How does this module hand off responsibility to external logic? | valid-ready / req-done / level-pulse |
 
+## References and Examples
+
+Use `references/` for pattern rules and `examples/` for concrete RTL patterns, but read both through the same five essentials.
+
+- Every reference should explain the pattern's Fact, Event, Priority, Boundary, and Contract model.
+- Every example should include a `本例 5 要素` table before the RTL code.
+- Do not add an example that only shows code; the reader must be able to see which unfinished fact each register remembers and which event changes it.
+- If an example has no registers, say that explicitly under Fact and explain the combinational contract.
+
 ## 2. Design Flow
 
 For any RTL module, derive behavior in this order.

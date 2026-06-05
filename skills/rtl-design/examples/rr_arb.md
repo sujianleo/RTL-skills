@@ -1,5 +1,15 @@
 # rr_arb
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | pointer 记住上次服务位置或下一次搜索起点。 |
+| Event | `grant_fire` 表示本次授权被接受，触发 pointer 旋转。 |
+| Priority | reset 初始化 pointer；已授权但未完成时保持；完成后再 rotate。 |
+| Boundary | 多 requester 同时请求、无请求、最后一位 wrap 到 0 都要稳定处理。 |
+| Contract | grant 按 round-robin 公平策略产生，是否保持到 accept 由接口契约决定。 |
+
 ```verilog
 /*
 1. 模块一句话职责

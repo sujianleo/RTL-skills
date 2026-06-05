@@ -1,5 +1,15 @@
 # async_fifo
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | `wbin/rbin` 记住本地读写位置，`wgray/rgray` 记住可跨域同步的指针事实，同步链记住对端进度。 |
+| Event | `push_fire = w_en && !w_full`，`pop_fire = r_en && !r_empty`。 |
+| Priority | reset 清空指针和同步链；push/pop 只在各自 fire 时推进，否则保持。 |
+| Boundary | `w_full` 防越界写，`r_empty` 防空读，Gray 指针和扩展位吸收 CDC 与 wrap 边界。 |
+| Contract | 写侧只在 `!w_full` 推送，读侧只在 `!r_empty` 弹出，跨域只同步 Gray 指针。 |
+
 ```verilog
 /*
 1. 模块一句话职责

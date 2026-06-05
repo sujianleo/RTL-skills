@@ -11,16 +11,20 @@ The goal is not only to explain one module. The goal is to give the reader a reu
 Write the note in this order:
 
 1. What problem does this module solve?
-2. Who are the sides of the module?
-3. Where do the timings disagree?
-4. What facts must survive across cycles?
-5. What storage is the smallest honest memory for those facts?
-6. What are the event wires, and what real event does each one mean?
-7. What are the key scenarios?
-8. How does each register set, clear, and hold?
-9. How do outputs come from stored facts and events?
-10. What checks prove the explanation matches the RTL?
-11. What reusable design recipe can be applied to another module?
+2. What is the external contract?
+3. What are the five essentials?
+   - Fact: what must survive across cycles?
+   - Event: what changes each fact?
+   - Priority: who wins in same-cycle conflicts?
+   - Boundary: what absorbs late input, stall, abort, reset, or skew?
+   - Contract: who owns each request, response, or payload?
+4. What storage is the smallest honest memory for those facts?
+5. What are the event wires, and what real event does each one mean?
+6. What are the key scenarios?
+7. How does each register set, clear, and hold?
+8. How do outputs come from stored facts and events?
+9. What checks prove the explanation matches the RTL?
+10. What reusable design recipe can be applied to another module?
 
 ## Universal Questions
 
@@ -47,6 +51,7 @@ Register:
   remembers:
   becomes true or loads when:
   becomes false or invalid when:
+  same-cycle priority:
   holds otherwise because:
   bug prevented:
 ```
@@ -115,12 +120,13 @@ Then explain what holds during backpressure. If a protocol says payload must sta
 End the note with a compact recipe:
 
 1. Identify the producer and consumer sides.
-2. List timing mismatches.
-3. Name the facts that must survive later.
+2. Define the external contract.
+3. Fill the five essentials: Fact, Event, Priority, Boundary, Contract.
 4. Allocate one clear storage element per fact.
 5. Define accept and consume events.
 6. Derive pointers, counters, wait bits, and states from those events.
-7. Derive outputs from stored facts.
-8. Check reset, steady flow, stall, release, boundary, and simultaneous events.
-9. Draw only the WaveDrom scenes that prove confusing timing.
-10. Run lint and a tiny directed simulation for uncertain scenes.
+7. Encode same-cycle priority before writing `if/else`.
+8. Derive outputs from stored facts, event wires, or state phases.
+9. Check reset, steady flow, stall, release, boundary, and simultaneous events.
+10. Draw only the WaveDrom scenes that prove confusing timing.
+11. Run lint and a tiny directed simulation for uncertain scenes.

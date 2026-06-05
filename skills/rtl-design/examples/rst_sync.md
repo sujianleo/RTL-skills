@@ -1,5 +1,15 @@
 # rst_sync
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | shift register 记住复位释放已经在目标 clock 域连续传播了几拍。 |
+| Event | async reset assert 立即清零；reset deassert 后每个 clock edge 移入 1。 |
+| Priority | async reset assert 最高优先级；deassert 后只能同步释放。 |
+| Boundary | 异步释放边界由多级同步吸收，降低亚稳传播风险。 |
+| Contract | reset 可以异步拉低，但对本域逻辑的释放必须同步。 |
+
 ```verilog
 /*
 1. 模块一句话职责

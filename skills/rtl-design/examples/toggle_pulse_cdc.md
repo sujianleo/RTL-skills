@@ -1,5 +1,15 @@
 # toggle_pulse_cdc
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | source toggle 记住事件奇偶，destination sync chain 记住采样历史。 |
+| Event | `src_pulse` 翻转 toggle，destination 检测 toggle 变化输出 one-cycle pulse。 |
+| Priority | reset 清零；源域 pulse 翻转；目标域同步后比较。 |
+| Boundary | pulse 不直接跨域；过密事件需要闭环 handshake 或 FIFO。 |
+| Contract | 单向低频事件跨域，只保证目标域看到 toggle 变化。 |
+
 ```verilog
 /*
 1. 模块一句话职责

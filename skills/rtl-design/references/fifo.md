@@ -1,10 +1,11 @@
 ## Contents
 
 1. Module-first questions
-2. State selection
-3. Behavioral derivation order
-4. Common design choices
-5. Checks before finishing
+2. Five-essential FIFO model
+3. State selection
+4. Behavioral derivation order
+5. Common design choices
+6. Checks before finishing
 
 ## Module-first Questions
 
@@ -17,6 +18,16 @@ State these items before writing RTL:
 - What happens on simultaneous push and pop?
 
 If the user does not specify, assume synchronous single-clock FIFO unless the interface clearly spans clock domains.
+
+## Five-Essential FIFO Model
+
+| Core | FIFO Question | Typical RTL |
+|---|---|---|
+| Fact | Which entries are currently owned by the FIFO? | memory, write pointer, read pointer, count/wrap/full-empty state |
+| Event | Which operation was legally accepted this cycle? | `push_fire`, `pop_fire` |
+| Priority | How do push and pop interact in one cycle? | count hold, pointer advance rules, bypass/FWFT rules |
+| Boundary | What happens at empty, full, and pointer wrap? | block, allow simultaneous opposite op, wrap bit |
+| Contract | What can producer/consumer assume? | `full` means cannot push, `empty` means cannot pop, unless contract defines bypass |
 
 ## State Selection
 
@@ -40,11 +51,11 @@ Prefer wrap-bit schemes when matching common hardware implementation patterns ma
 
 Derive FIFO logic in this order:
 
-1. Reset state
-2. Push-only cycle
-3. Pop-only cycle
-4. Simultaneous push/pop cycle
-5. Boundary behavior at empty and full
+1. Define contract: registered output or FWFT, push/pop allowed at full/empty or not.
+2. Define events: `push_fire` and `pop_fire` after full/empty gating.
+3. List facts: payload storage, write position, read position, occupancy/disambiguation.
+4. Set same-cycle priority: reset, push/pop combined, push-only, pop-only, hold.
+5. Check boundaries: empty, full, wrap, simultaneous push/pop at boundary.
 
 For each register, write set/clear/hold rules:
 

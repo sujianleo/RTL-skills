@@ -1,5 +1,15 @@
 # reg_slice
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | `valid_q/data_q` 记住输出槽位是否有未被下游消费的 beat。 |
+| Event | `in_fire` 接收输入，`out_fire` 送出输出。 |
+| Priority | reset 清空；同拍 consume/refill 时新 beat 装入并保持 valid；consume-only 清 valid。 |
+| Boundary | downstream stall 时 payload 必须保持，不能被 upstream 新数据覆盖。 |
+| Contract | valid/ready 只在 `valid && ready` 转移，payload 在 `valid && !ready` 时稳定。 |
+
 ```verilog
 /*
 1. 模块一句话职责

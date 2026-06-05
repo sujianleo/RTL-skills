@@ -1,12 +1,13 @@
 ## Contents
 
 1. Port semantics
-2. Core timing scenarios
-3. Design categories
-4. Derivation order
-5. Register checklist
-6. Common mistakes
-7. AXI channel guidance
+2. Five-essential reading
+3. Core timing scenarios
+4. Design categories
+5. Derivation order
+6. Register checklist
+7. Common mistakes
+8. AXI channel guidance
 
 ## Port Semantics
 
@@ -19,6 +20,18 @@ For `valid/ready` style interfaces, keep the port meanings strict:
 - `data` or `payload`: the beat associated with the handshake
 
 Do not mix external meaning with internal cause. Example: `s_ready` means "can accept now", not "skid slot is empty". The latter is an internal reason.
+
+## Five-Essential Reading
+
+Use this table before choosing simple slice, skid buffer, or elastic buffer.
+
+| Core | Handshake Question | Typical RTL |
+|---|---|---|
+| Fact | Which beat is owned by this module after the edge? | `valid_q`, `data_q`, skid/queue occupancy |
+| Event | Which transfer happened this cycle? | `in_fire = s_valid && s_ready`, `out_fire = m_valid && m_ready` |
+| Priority | If consume and refill happen together, which data becomes visible next? | refill-before-load or consume-before-clear ordering |
+| Boundary | What happens when downstream stalls or upstream sends one more beat? | hold payload, skid slot, full/empty guard |
+| Contract | What must upstream/downstream see? | payload stable while `valid && !ready`, transfer only on `valid && ready` |
 
 ## Core Timing Scenarios
 
@@ -103,14 +116,13 @@ Tradeoff:
 
 For any handshake buffer, use this order:
 
-1. Decide what timing problem is being solved
-2. Decide whether `ready` must be combinational or may be delayed
-3. Determine how many extra beats must be safely absorbed
-4. Define the minimal stored state
-5. Derive data movement
-6. Derive `valid`
-7. Derive `ready`
-8. Check stall-edge and recovery scenarios
+1. State the external contract: when can input be accepted and output consumed?
+2. Name the event wires: `in_fire`, `out_fire`, and any refill/bypass event.
+3. List the facts: output beat valid, payload value, skid/queue occupancy.
+4. Decide same-cycle priority: reset, flush, consume/refill, accept, hold.
+5. Identify boundaries: stall edge, recovery, full/empty, simultaneous consume/refill.
+6. Map outputs: `m_valid`, `m_data`, `s_ready`.
+7. Check stall-edge and recovery scenarios.
 
 ## Register Checklist
 
@@ -126,6 +138,14 @@ Examples:
 - `valid_reg`: does the current output register hold a valid beat
 - `skid_en`: does the skid register currently hold a deferred beat
 - `count`: how many beats are buffered in the elastic queue
+
+For each of those, write:
+
+- Fact: what ownership or payload fact survives.
+- Event: what sets/loads or clears it.
+- Priority: what happens on same-cycle consume and accept.
+- Boundary: what happens under stall or full.
+- Contract: which external signal observes the fact.
 
 For data registers, write load-source priority explicitly:
 

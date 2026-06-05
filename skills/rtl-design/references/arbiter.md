@@ -1,10 +1,11 @@
 ## Contents
 
 1. Policy-first questions
-2. State selection
-3. Behavioral derivation order
-4. Grant timing patterns
-5. Checks before finishing
+2. Five-essential arbiter model
+3. State selection
+4. Behavioral derivation order
+5. Grant timing patterns
+6. Checks before finishing
 
 ## Policy-First Questions
 
@@ -17,6 +18,16 @@ State these items before writing RTL:
 - Does the downstream interface use `valid/ready` semantics?
 
 If the policy is not explicit, do not guess silently. State the chosen policy in comments and derive the rest from it.
+
+## Five-Essential Arbiter Model
+
+| Core | Arbiter Question | Typical RTL |
+|---|---|---|
+| Fact | What fairness or ownership fact survives? | last grant pointer, locked grant, outstanding owner |
+| Event | When is a grant accepted or retired? | `grant_fire`, `release_fire`, request valid |
+| Priority | Does held grant, new request, or rotation win? | lock/hold before new search, reset pointer rule |
+| Boundary | What if request drops, downstream stalls, or pointer wraps? | hold grant, mask/rotate, wrap search |
+| Contract | Is grant combinational, registered, held until accept, or one-cycle? | request/grant/ready handshake rule |
 
 ## State Selection
 
@@ -36,11 +47,11 @@ Each state element should answer one question only:
 
 Derive arbiter logic in this order:
 
-1. No requests active
-2. One request active
-3. Multiple requests active
-4. Downstream stall while a grant is present
-5. Grant completion and winner rotation
+1. Define contract: combinational grant, registered grant, or held grant until accept.
+2. Define events: request eligible, grant selected, grant accepted, owner released.
+3. List facts: current owner, rotation pointer, lock/hold state.
+4. Set priority: reset, held owner, completion/advance, new winner, hold.
+5. Check boundaries: no request, one request, multiple request, downstream stall, pointer wrap.
 
 For each register, define set/clear/hold:
 

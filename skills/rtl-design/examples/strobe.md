@@ -1,5 +1,15 @@
 # strobe
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | 本例是开环 strobe/data，通常不保存跨拍事实；若外部要求保持，就要升级为 hold 版本。 |
+| Event | `strobe_i` 本拍即表示 data 有效。 |
+| Priority | 无内部 set/clear 优先级；reset 只影响可选输出寄存。 |
+| Boundary | 接收端 busy 或漏采时没有本模块内建保护。 |
+| Contract | strobe 是一拍声明，接收端必须在该拍采样，模块不提供 ack/backpressure。 |
+
 ```verilog
 /*
 1. 模块一句话职责

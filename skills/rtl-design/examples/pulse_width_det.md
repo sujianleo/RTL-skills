@@ -1,5 +1,15 @@
 # pulse_width_det
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | previous input level 和 width counter 记住当前 pulse 已持续多久。 |
+| Event | rising edge 开始计数，level hold 继续计数，falling edge 产生宽度判断。 |
+| Priority | reset > 新边沿/结束边沿 > 计数累加 > hold。 |
+| Boundary | pulse 太短、太长、计数饱和或连续 pulse 都要有明确处理。 |
+| Contract | 输出 pulse 表示刚结束的输入 pulse 宽度满足阈值。 |
+
 ```verilog
 /*
 1. 模块一句话职责

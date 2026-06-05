@@ -6,12 +6,23 @@ Do not start by writing `if/else`. Fill this template first.
 
 ## Quick Rule
 
+Use the same five essentials for every module:
+
+| Core | Question | RTL Output |
+|---|---|---|
+| Fact | What information must survive after this clock edge? | register / flag / counter / state |
+| Event | What makes a fact become true or false? | fire / pulse / done / timeout |
+| Priority | If events happen in the same cycle, who wins? | ordered `if/else` update |
+| Boundary | What absorbs late input, busy state, stall, abort, or reset? | pending / buffer / clear / hold |
+| Contract | How does the module hand off responsibility externally? | valid-ready / req-done / pulse-level |
+
 For each register, answer only these questions:
 
-1. What fact does this register record?
+1. What unfinished fact does this register remember?
 2. What event makes that fact become true?
-3. What event makes that fact become false?
-4. Why is hold correct in all other cycles?
+3. What event consumes, clears, or invalidates the fact?
+4. Which same-cycle priority decides set versus clear?
+5. Why is hold correct at the boundary?
 
 If these answers are unclear, the RTL is not ready to be written.
 
@@ -24,7 +35,7 @@ ____________________________
 1. Module job in one sentence
 - __________________________
 
-2. Interface semantics
+2. Interface contract
 - in/out signal: ____________
 - in/out signal: ____________
 - in/out signal: ____________
@@ -34,29 +45,36 @@ ____________________________
   - response/status side: ____
   - config/register side: ____
 
-3. Module principle
+3. Five essentials
+- Fact: _____________________
+- Event: ____________________
+- Priority: _________________
+- Boundary: _________________
+- Contract: _________________
+
+4. Module principle
 - structural idea: __________
 - why it works: _____________
 - main tradeoff: ____________
 
-4. Key timing scenarios
+5. Key timing scenarios
 - idle -> first transfer: ___
 - steady-state flow: ________
 - stall edge: _______________
 - recovery after stall: _____
 - boundary case: ____________
 
-5. Cross-cycle facts
+6. Cross-cycle facts
 - fact_a: must survive because ____________
 - fact_b: must survive because ____________
 - fact_c: must survive because ____________
 
-6. State / register list
+7. State / register list
 - reg_a: records ____________
 - reg_b: records ____________
 - reg_c: records ____________
 
-7. Register derivation
+8. Register derivation
 - reg_a
   - fact: ___________________
   - set/load: _______________
@@ -75,17 +93,22 @@ ____________________________
   - clear/invalidate: _______
   - hold: otherwise hold
 
-8. Data-path priority
+9. Same-cycle priority
 - 1. ________________________
 - 2. ________________________
 - 3. ________________________
 
-9. Meaningful event wires
+10. Meaningful event wires
 - ev_a = ____________________
 - ev_b = ____________________
 - ev_c = ____________________
 
-10. RTL structure
+11. Output mapping
+- output_a comes from: _______
+- output_b comes from: _______
+- done/ready clears: ________
+
+12. RTL structure
 - parameters / ports
 - grouped ports with short comments
 - state registers
@@ -93,7 +116,7 @@ ____________________________
 - one always block per register when practical
 - output assigns
 
-11. Post-write checks
+13. Post-write checks
 - reset: ____________________
 - normal flow: ______________
 - stall: ____________________
@@ -112,22 +135,32 @@ ____________________________
 2. 接口语义
 - ...
 
-3. 模块原理
+3. 五要素
+- 事实:
+- 事件:
+- 优先级:
+- 边界:
+- 契约:
+
+4. 模块原理
 - ...
 
-4. 关键时序场景
+5. 关键时序场景
 - ...
 
-5. 跨拍事实
+6. 跨拍事实
 - ...
 
-6. 状态 / 寄存器
+7. 状态 / 寄存器
 - ...
 
-7. 每个寄存器的 set / clear / hold
+8. 每个寄存器的 set / clear / hold
 - reg_a: ...
 
-8. 结构说明
+9. 输出映射
+- ...
+
+10. 结构说明
 - 先讲行为和跨拍事实，再在这里补充对应的事件线名字
 */
 ```
@@ -166,16 +199,18 @@ If the user wants synthesizable RTL only, omit non-synthesizable helpers such as
 Use this order every time:
 
 1. Write the module job.
-2. Define what each port means.
-3. Explain the module principle in plain language.
-4. Act out the timing scenarios without forcing register names or event-wire names too early.
-5. Extract the facts that must survive across cycles.
-6. Turn those facts into the minimal register set.
-7. Derive each register with `set / clear / hold`.
-8. Decide data-source priority.
-9. Create only meaningful event wires.
-10. Write RTL.
-11. Re-run the scenarios mentally or in simulation.
+2. Define the external contract for each important port.
+3. Fill the five essentials table: Fact, Event, Priority, Boundary, Contract.
+4. Explain the module principle in plain language.
+5. Act out the timing scenarios without forcing register names or event-wire names too early.
+6. Extract the facts that must survive across cycles.
+7. Turn those facts into the minimal register set.
+8. Derive each register with `set / clear / hold`.
+9. Decide same-cycle priority.
+10. Create only meaningful event wires.
+11. Map outputs back to state, facts, events, or contract.
+12. Write RTL.
+13. Re-run the scenarios mentally or in simulation.
 
 ## Good Habits
 

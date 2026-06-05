@@ -1,5 +1,15 @@
 # strobe_hold_tx
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | hold register 记住“strobe 已发起但 transaction 还没 done”。 |
+| Event | start strobe set hold，done/clear 释放 hold。 |
+| Priority | reset > done/clear > start > hold。 |
+| Boundary | start 和 done 同拍、busy start、abort clear 都必须定义。 |
+| Contract | 输出请求是 level，必须保持到外部 done，而不是只打一拍。 |
+
 ```verilog
 /*
 1. 模块一句话职责

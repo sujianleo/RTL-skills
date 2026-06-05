@@ -1,5 +1,15 @@
 # req_ack_4phase
 
+## 本例 5 要素
+
+| Core | 本例体现 |
+|---|---|
+| Fact | `req` 和 `ack` level 记住四相握手当前阶段。 |
+| Event | source event 拉高 req，destination seen req 拉高 ack，source seen ack 拉低 req，destination seen req low 拉低 ack。 |
+| Priority | reset > phase clear > phase set > hold，避免同拍重复完成。 |
+| Boundary | 源域在 request 未完成前不能发起新 outstanding 事件。 |
+| Contract | 四相 req/ack 保证事件可靠跨域，代价是每次事务必须完整返回 idle。 |
+
 ```verilog
 /*
 1. 模块一句话职责
