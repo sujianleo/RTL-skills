@@ -1,6 +1,6 @@
 ---
 name: rtl-wavedrom
-description: Use this skill to create, edit, or validate WaveDrom JSON timing diagrams for RTL behavior. Diagrams must explain concrete timing scenarios and be traceable to actual RTL expressions, event wires, and register update logic.
+description: Use this skill to create, edit, or validate WaveDrom JSON timing diagrams as timing evidence for RTL notes. Each diagram must prove one concrete scenario and trace back to actual RTL events, registers, priority, boundaries, and contracts.
 metadata:
   source: "RTL skill set"
   category: rtl
@@ -8,28 +8,53 @@ metadata:
 
 # RTL WaveDrom
 
-Use this skill to create, edit, or validate WaveDrom `.wave.json` timing diagrams for RTL modules.
+Use this skill to create, edit, or validate WaveDrom `.wave.json` timing diagrams for RTL behavior.
 
-Core rule: draw one concrete timing scenario from actual RTL behavior, not a vague protocol overview.
+Core idea:
 
-## When To Use
+```text
+WaveDrom = timing evidence for one RTL scenario
+```
+
+Do not draw vague protocol overviews.
+
+A diagram must prove one concrete behavior from the RTL note.
+
+## 1. Role In The Skill Set
+
+`rtl-note` owns the learning note and decides which timing scenarios need evidence.
+
+`rtl-wavedrom` owns:
+
+- valid WaveDrom JSON
+- cycle-level signal timing
+- equal-length waves
+- readable labels
+- traceability to RTL expressions and register update rules
+
+`rtl-check` can later validate the same scenario through lint or directed simulation.
+
+## 2. When To Use
 
 Use this skill when the user asks for:
 
-- WaveDrom or `.wave.json`
+- WaveDrom
+- `.wave.json`
 - RTL timing diagram
-- cycle N / N+1 waveform explanation
-- ready/valid stall or release diagram
-- request/response wait diagram
-- command/payload alignment
-- FIFO boundary timing
-- simultaneous push/pop
-- arbiter grant timing
+- cycle N / N+1 waveform
+- timing evidence for a design note
+- ready/valid stall diagram
+- pending / busy / abort timing
+- skewed done pulse timing
 - FSM transition waveform
 
-Do not use this skill for RTL code generation; use `rtl-design`. For design prose use `rtl-note`. For lint or simulation use `rtl-check`.
+Do not use this skill for RTL code generation; use `rtl-design`.
 
-## Reference Guide
+Do not use this skill for standalone prose; use `rtl-note`.
+
+Do not use this skill for lint/simulation; use `rtl-check`.
+
+## 3. Reference Guide
 
 Reuse the RTL design references:
 
@@ -40,116 +65,171 @@ Reuse the RTL design references:
 - `../rtl-design/references/fsm.md`
 - `../rtl-design/references/zero-base-design-note.md`
 
-## Core Method
+## 4. Five-Essence Timing Evidence
 
-A good waveform answers three questions:
+Every diagram should prove at least one of the five essentials.
 
-1. What scenario is being tested?
-2. Which event wire or register update causes each transition?
-3. What bug would appear if the timing were wrong?
+| 核心 | WaveDrom 要证明什么 |
+|---|---|
+| 事实 | 哪个寄存器跨拍记住了某个事实 |
+| 事件 | 哪个 pulse/fire/done 触发 set/clear |
+| 优先级 | 同拍多个事件时谁赢 |
+| 边界 | busy/stall/abort/skewed done 如何被吸收 |
+| 契约 | input/output pulse/level handshake 如何交接 |
 
-Every transition must trace back to one of:
+Before drawing, write:
 
-- input stimulus
-- combinational `assign`
-- meaningful event wire
-- `always_comb`
-- `always_ff`
-- register set / clear / hold rule
+```text
+Scenario:
+- ...
 
-After drawing, perform signal-by-signal validation.
+Proves:
+- fact/event/priority/boundary/contract
 
-## Scenario Selection
+Bug prevented:
+- ...
+```
 
-Create one file per concrete scenario. Prefer several small diagrams over one crowded diagram.
+## 5. Scenario Selection
+
+One file should explain one concrete scenario.
 
 Good names:
 
 ```text
-<module>_first_transfer.wave.json
-<module>_steady_flow.wave.json
-<module>_stall_hold.wave.json
-<module>_stall_release.wave.json
-<module>_payload_align.wave.json
-<module>_response_wait.wave.json
-<module>_simul_consume_refill.wave.json
-<module>_fifo_full_boundary.wave.json
-<module>_fifo_empty_boundary.wave.json
-<module>_arb_grant_hold.wave.json
-<module>_timeout_error.wave.json
+waves/<module>_first_transfer.wave.json
+waves/<module>_stall_hold.wave.json
+waves/<module>_pending_when_busy.wave.json
+waves/<module>_skewed_done.wave.json
+waves/<module>_abort_priority.wave.json
+waves/<module>_timeout_priority.wave.json
+waves/<module>_simul_consume_refill.wave.json
+waves/<module>_state_release.wave.json
 ```
 
-## Minimal Signal Set
+Avoid one large diagram that tries to explain the whole module.
+
+## 6. Minimal Signal Set
 
 Include only signals needed for the timing story.
 
 Order signals by story flow:
 
-1. clock
-2. upstream control/data
+1. `clk`
+2. key input pulse/level
 3. meaningful event wire
-4. stored cross-cycle fact register
-5. downstream wait/done
-6. final output/release
+4. cross-cycle fact register
+5. FSM state or counter, only if needed
+6. downstream wait/done
+7. final output/release
 
-Ready/valid example signals:
+Good examples:
 
-- `clk`
-- `in_valid`, `in_ready`, `in_data`
-- `accept_fire`
-- `valid_q`, `data_q`
-- `out_valid`, `out_ready`
-- `consume_fire`
+```text
+clk
+wake_pulse_i
+exit_busy
+pending_wake_q
+start_fire
+state_q
+req_o
+done_i
+```
 
-For FIFO, include `push_fire`, `pop_fire`, `fifo_count`, `full`, and `empty`.
+Avoid raw boolean signals that do not teach the timing decision.
 
-For request/response, include `req_fire`, `response_wait`, `rsp_valid`, `rsp_ready`, and `response_done`.
+## 7. Traceability Rule
 
-Avoid raw booleans that do not teach the timing decision.
+Every transition in the diagram must trace to RTL.
 
-## Style Rules
+For each important signal, know:
+
+```text
+input stimulus:
+- driven by test/scenario
+
+event wire:
+- assign expression
+
+register:
+- always_ff set/clear/hold rule
+
+output:
+- state phase / registered fact / event mapping
+```
+
+The adjacent note should include:
+
+```markdown
+RTL 对照：
+- `start_fire` comes from `assign ...`
+- `pending_q` sets in `always_ff ...`
+- `req_o` is driven by `state_q == S_REQ`
+```
+
+## 8. Event Wire Timing Rule
+
+For combinational event wires, distinguish:
+
+```text
+before sampling edge
+vs
+after register update
+```
+
+Signals such as `accept_fire`, `consume_fire`, `start_fire`, `done_fire`, `push_fire`, and `pop_fire` may be true before the edge and change immediately after state updates.
+
+If ambiguity matters, explain which side of the clock edge the diagram shows.
+
+## 9. Backpressure / Hold Rule
+
+In any stall or backpressure diagram, show stability.
+
+If the protocol says a side owns data, that data must hold.
+
+Examples:
+
+- `valid && !ready`
+- `out_valid && !out_ready`
+- busy FSM cannot accept a new pulse unless pending is provided
+- request must hold until done if contract says level request
+
+If stimulus changes payload under stall, call it illegal BFM/source behavior.
+
+## 10. Priority Rule
+
+Use WaveDrom to prove priority when same-cycle events are tricky.
+
+Common priority scenarios:
+
+```text
+abort vs done
+timeout vs done
+set pending vs clear pending
+consume vs refill
+push vs pop at boundary
+start vs busy
+```
+
+The diagram must make clear which event wins and which register value appears after the edge.
+
+## 11. JSON Style Rule
 
 Keep JSON small.
 
 Prefer:
 
-- no nested groups unless necessary
+- no nested groups unless needed
 - no `I` / `O` / `int` direction labels
 - no `head.text` by default
-- no bottom note pseudo-signals
 - no long `foot.text`
 - short data labels: `A0`, `D0`, `R0`, `IDLE`, `WAIT`, `DONE`
 - `config: { "hscale": 2 }` when labels are close
-- colored data/state bands only for important stored facts or payloads
+- color only important state/data bands
 
-Do not color every signal.
+Do not color everything.
 
-## Backpressure Rule
-
-In any backpressure diagram, show payload stability.
-
-If a protocol says the source is stalled, payload must hold stable. Examples:
-
-- `valid && !ready`
-- downstream `ready=0`
-- clock-enable pause
-- sink owns payload but has not completed
-
-If stimulus changes address/control/data during stall, call it a source/BFM violation. Do not draw it as accepted DUT behavior.
-
-## Event Wire Timing Rule
-
-For combinational event wires, explicitly distinguish:
-
-```text
-before sampling edge
-vs
-right after registers update
-```
-
-Signals such as `accept_fire`, `consume_fire`, `done_fire`, `push_fire`, and `pop_fire` may be true before an edge and change immediately after state updates. The diagram or adjacent explanation must say which side of the edge is shown when ambiguity matters.
-
-## Wave Length Rule
+## 12. Wave Length Rule
 
 Avoid ragged right edges.
 
@@ -171,7 +251,7 @@ Bad:
 { "name": "valid_q", "wave": "0.1..0" }
 ```
 
-## JSON Validity Rule
+## 13. JSON Validity Rule
 
 Before finishing, validate:
 
@@ -183,68 +263,79 @@ Before finishing, validate:
 6. Data labels match data/state symbols.
 7. Arrows use continuous node letters if used.
 8. Edge labels are short.
-9. No long prose is hidden inside `foot.text`.
+9. Long explanation is outside JSON, in the note.
 
-## Arrows
+## 14. Arrows
 
 Use arrows only when they clarify causality.
 
 If used:
 
-- node letters should be continuous in reading order: `a`, `b`, `c`, `d`
-- keep nodes few
-- keep labels short
-
-Example:
-
 ```json
 "edge": [
-  "a->b push",
-  "c->d pop"
+  "a->b set",
+  "c->d clear"
 ]
 ```
 
-Long explanation belongs in the adjacent Markdown note.
+Rules:
 
-## Minimal Example: Ready/Valid Stall Hold
+- node letters should be continuous in reading order
+- keep nodes few
+- keep labels short
+
+Long explanation belongs in the adjacent RTL note.
+
+## 15. Minimal Example: Pending Wake While Busy
 
 ```json
 {
   "config": { "hscale": 2 },
   "signal": [
-    { "name": "clk",          "wave": "p......" },
-    { "name": "in_valid",     "wave": "01...0." },
-    { "name": "in_ready",     "wave": "01.0.1." },
-    { "name": "in_data",      "wave": "x2...x.", "data": ["D0"] },
-    { "name": "accept_fire",  "wave": "01.0.1." },
-    { "name": "valid_q",      "wave": "0.1..0." },
-    { "name": "data_q",       "wave": "x.2..x.", "data": ["D0"] },
-    { "name": "out_ready",    "wave": "0..1..." },
-    { "name": "consume_fire", "wave": "0..1.0." }
+    { "name": "clk",          "wave": "p......." },
+    { "name": "wake_i",       "wave": "010...." },
+    { "name": "busy",         "wave": "01...0." },
+    { "name": "pending_q",    "wave": "0.1..0." },
+    { "name": "start_fire",   "wave": "0....10" },
+    { "name": "req_o",        "wave": "0.....10" }
   ]
 }
 ```
 
-Adjacent explanation should state:
+Adjacent note should state:
 
-- `in_data` stays `D0` while stalled.
-- `valid_q` remembers one payload is waiting.
-- `consume_fire` clears the stored fact.
+```text
+Fact:
+- pending_q remembers wake_i arrived while busy.
 
-## Final Signal Check
+Event:
+- wake_i pulse sets pending_q.
+- start_fire consumes it.
+
+Boundary:
+- busy would otherwise lose a one-cycle pulse.
+
+Bug prevented:
+- wake event lost while FSM was busy.
+```
+
+## 16. Final Signal Check
 
 For every drawn signal, check:
 
-1. Is it input, combinational event, or register-backed value?
-2. What RTL makes it change?
-3. Under stall/backpressure, does it hold, clear, or recompute?
-4. Under reset/flush/abort, what happens?
-5. Is this transition before or after the clock edge?
-6. Does the diagram show accepted DUT behavior or illegal stimulus?
-7. Does the diagram match register update priority?
+1. Is it input, event wire, register, state, counter, or output?
+2. What RTL expression or always_ff block changes it?
+3. What clock edge causes the update?
+4. What happens under reset/abort/clear?
+5. What happens if set and clear happen in the same cycle?
+6. Does the diagram match the module contract?
+7. Does the diagram show accepted DUT behavior, not illegal stimulus?
+8. Are all wave strings equal length and ended with `.`?
 
-If uncertain, create a tiny directed simulation with `rtl-check`.
+## 17. Handoff
 
-## Handoff
+Use `rtl-note` to explain why this scenario matters.
 
-Use `rtl-design` if RTL needs to be written or fixed. Use `rtl-note` if the diagram needs a companion explanation. Use `rtl-check` if the diagram should be validated by lint or directed simulation.
+Use `rtl-design` if RTL must be changed.
+
+Use `rtl-check` if the diagram should be validated with lint or directed simulation.
