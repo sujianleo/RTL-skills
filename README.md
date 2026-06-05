@@ -1,5 +1,7 @@
 # Codex RTL Skills
 
+[中文说明](README.zh-CN.md)
+
 ```text
 ██████╗ ████████╗██╗
 ██╔══██╗╚══██╔══╝██║

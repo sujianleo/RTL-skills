@@ -1,0 +1,10 @@
+# GitHub Linguist language display
+#
+# This repository is an RTL/SystemVerilog skill set. The main source material is
+# stored as Codex skill Markdown files, so explicitly classify those skill bodies
+# as SystemVerilog-oriented content for GitHub language statistics.
+skills/**/SKILL.md linguist-language=SystemVerilog
+README*.md linguist-documentation
+install.sh linguist-detectable=false
+*.sv linguist-language=SystemVerilog
+*.svh linguist-language=SystemVerilog
