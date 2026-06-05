@@ -1,6 +1,6 @@
 ---
 name: rtl-note
-description: Use this skill to create fast RTL learning notes from existing RTL code. The note explains the module through five essentials: facts, events, priority, boundaries, and contracts, and uses WaveDrom as timing evidence when cycle-level proof is needed.
+description: "Use this skill to create fast RTL learning notes from existing RTL code. The note explains the module through five essentials: facts, events, priority, boundaries, and contracts, and uses WaveDrom as timing evidence when cycle-level proof is needed."
 metadata:
   source: "RTL skill set"
   category: rtl
