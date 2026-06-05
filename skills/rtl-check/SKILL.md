@@ -1,22 +1,35 @@
 ---
 name: rtl-check
-description: Use this skill to run or propose RTL syntax checks, lint checks, and small directed simulations. Prefer Verilator by default, but use VCS/Xcelium when the design requires project-specific simulator support.
+description: Use this skill to run or propose RTL syntax/lint checks and small directed simulations. The goal is to verify RTL facts, events, priorities, boundaries, and interface contracts, not just run a tool command.
 metadata:
   source: "RTL skill set"
   category: rtl
 ---
-
 # RTL Check
 
-Use this skill for RTL syntax checks, lint checks, and small directed simulations.
+Use this skill to verify RTL behavior with lint, syntax checks, and small directed simulations.
 
-Core rule: a check must validate a concrete timing scenario or RTL property. Do not claim PASS unless a command actually ran.
+Core idea:
 
-Default tool: Verilator.
+```text
+RTL check = scenario -> stimulus -> observed facts/events -> pass/fail conclusion
+```
 
-Use VCS or Xcelium instead when the design depends on UVM, encrypted IP, vendor primitives, gate-level/SDF, unsupported DPI, simulator-specific behavior, or company run scripts.
+Do not just run a tool.
 
-## When To Use
+Use the tool to prove a concrete RTL behavior.
+
+## 1. Check Essence
+
+| Core | Check Question | RTL Evidence |
+|---|---|---|
+| Fact | Did the register remember the required cross-cycle fact? | register/state value |
+| Event | Did fire/pulse/done/timeout happen in the correct cycle? | event wire / pulse |
+| Priority | If two events happen in one cycle, who wins? | next state / register update |
+| Boundary | Does the design handle late input, busy, stall, abort, reset? | pending/buffer/clear behavior |
+| Contract | Does the module obey its external handshake contract? | req/done/valid-ready behavior |
+
+## 2. When To Use
 
 Use this skill when the user asks for:
 
@@ -25,34 +38,43 @@ Use this skill when the user asks for:
 - small directed simulation
 - waveform-assisted timing check
 - validation of a WaveDrom scenario
-- ready/valid, FIFO, arbiter, FSM, timeout, or abort behavior check
+- ready/valid, FIFO, arbiter, FSM, timeout, abort, or pending behavior check
 
-Do not use this skill for full UVM regressions or project signoff.
+Do not use this skill for full UVM regressions or signoff.
 
-## Reference Guide
-
-Reuse the RTL design references:
-
-- `../rtl-design/references/module-template.md`
-- `../rtl-design/references/handshake.md`
-- `../rtl-design/references/fifo.md`
-- `../rtl-design/references/arbiter.md`
-- `../rtl-design/references/fsm.md`
-- `../rtl-design/references/zero-base-design-note.md`
-
-## Check Flow
+## 3. Check Flow
 
 Use this order:
 
-1. Identify the module and exact files.
-2. Identify include dirs, defines, and top module.
-3. Run or propose syntax/lint command.
-4. If behavior matters, pick one concrete timing scenario.
-5. Build a tiny directed test for that scenario.
-6. Assert only the few signals that prove the behavior.
-7. Report what actually ran and what did not run.
+1. Identify module and files.
+2. Identify clock/reset, include dirs, defines, and top module.
+3. State the contract being checked.
+4. Pick one concrete scenario.
+5. Name the bug this scenario prevents.
+6. List observed signals.
+7. Run or propose lint/sim command.
+8. Report only what actually ran.
 
-## Default Lint Commands
+## 4. Scenario Template
+
+```text
+Scenario:
+- ...
+Bug prevented:
+- ...
+Stimulus:
+- cycle N:
+- cycle N+1:
+- cycle N+2:
+Expected behavior:
+- event:
+- register:
+- output:
+Pass condition:
+- ...
+```
+
+## 5. Default Lint Command
 
 Simple SystemVerilog RTL:
 
@@ -60,7 +82,7 @@ Simple SystemVerilog RTL:
 verilator --lint-only --Wall -sv <rtl_files>
 ```
 
-If timing controls are present:
+With timing controls:
 
 ```sh
 verilator --lint-only --Wall --timing -sv <rtl_files>
@@ -78,17 +100,17 @@ verilator --lint-only --Wall -sv \
 
 Useful options:
 
-- `--top-module <name>`: specify top module
-- `-Wno-fatal`: do not make warnings fatal
-- `-Wno-DECLFILENAME`: ignore file/module name mismatch when intentional
-- `-Wno-UNUSED`: suppress intentional unused signals
-- `-Wno-WIDTH`: suppress only after reviewing width behavior
+- `--top-module <name>`
+- `-Wno-fatal`
+- `-Wno-DECLFILENAME`
+- `-Wno-UNUSED`
+- `-Wno-WIDTH`
 
-Do not suppress warnings blindly. Explain why the warning is harmless or unavoidable.
+Do not suppress warnings blindly. Explain why each suppression is safe.
 
-## Lint Review Priority
+## 6. Lint Priority
 
-Prioritize findings in this order:
+Prioritize:
 
 1. syntax error
 2. missing include or macro
@@ -98,36 +120,41 @@ Prioritize findings in this order:
 6. width mismatch
 7. uninitialized state
 8. unused signal caused by design bug
-9. incomplete assignment or unreachable branch
-10. filename/module mismatch
+9. incomplete assignment
+10. unreachable branch
 
-Width warnings must be reviewed carefully in RTL.
+Width warnings must be reviewed, not blindly ignored.
 
-## Directed Simulation Goal
+## 7. Directed Simulation Principle
 
-A small simulation should support one timing story, not broad coverage.
+One test should prove one timing story.
 
-Each directed test should:
+Good scenarios:
+
+- `pending_event_while_busy`
+- `skewed_done_latch`
+- `abort_vs_done_priority`
+- `timeout_vs_done_priority`
+- `stall_hold_payload`
+- `simultaneous_consume_refill`
+- `fifo_full_boundary`
+- `fifo_empty_boundary`
+
+Each test should:
 
 1. reset DUT
-2. drive only the needed handshake or state transition
-3. assert the signals that prove the scenario
-4. optionally dump VCD/FST
-5. match one WaveDrom scene when available
+2. drive only the required inputs
+3. assert the few signals that prove the behavior
+4. optionally dump waveform
+5. map to one WaveDrom scenario if available
 
-Good test names:
+Bad checks:
 
-```text
-tb_<module>_stall_hold.cpp
-tb_<module>_stall_release.cpp
-tb_<module>_simul_consume_refill.cpp
-tb_<module>_fifo_full_boundary.cpp
-tb_<module>_fifo_empty_boundary.cpp
-tb_<module>_response_wait.cpp
-tb_<module>_timeout_error.cpp
-```
+- one huge random test
+- waveform with no assertion
+- lint only while claiming function is correct
 
-## Minimal Verilator Simulation
+## 8. Minimal Verilator Simulation
 
 Build:
 
@@ -154,13 +181,13 @@ verilator -Wall -sv --trace --cc <rtl_files> \
 ./obj_dir/V<top_module>
 ```
 
-Open:
+Open waveform:
 
 ```sh
 gtkwave dump.vcd
 ```
 
-## Minimal C++ Harness Pattern
+## 9. Minimal C++ Testbench Shape
 
 ```cpp
 #include "V<top_module>.h"
@@ -210,9 +237,57 @@ int main(int argc, char** argv) {
 }
 ```
 
-Replace `<top_module>` before use.
+## 10. Five-Essence Checklists
 
-## Scenario Checklists
+### Fact Check
+
+Ask:
+
+- What fact should this register remember?
+- When does it set?
+- When does it clear?
+- Can it stay stale?
+- Can it be lost?
+
+### Event Check
+
+Ask:
+
+- Is this event pulse or level?
+- Can it arrive while busy?
+- Can two events arrive in the same cycle?
+- Is the event sampled before or after state update?
+
+### Priority Check
+
+Ask:
+
+- If abort and done happen together, who wins?
+- If timeout and done happen together, who wins?
+- If set and clear happen together, who wins?
+- Does RTL if/else encode the same priority?
+
+### Boundary Check
+
+Ask:
+
+- What if input arrives late?
+- What if input arrives while busy?
+- What if external done pulses are skewed?
+- What if output side stalls?
+- What if reset/abort happens in the middle?
+
+### Contract Check
+
+Ask:
+
+- Is req pulse or level?
+- Is done pulse or level?
+- Does req hold until done?
+- Can new req arrive before old done?
+- Who owns clearing the transaction?
+
+## 11. Common Scenario Checks
 
 ### Ready/Valid
 
@@ -224,7 +299,7 @@ Check:
 - same-cycle consume/refill
 - no data loss or duplication
 - reset clears valid state
-- flush/abort priority when present
+- flush/abort priority
 
 ### FIFO
 
@@ -235,22 +310,10 @@ Check:
 - pop to empty
 - full boundary
 - push blocked when full unless simultaneous pop is allowed
-- pop blocked when empty unless simultaneous push behavior is defined
+- pop blocked when empty unless simultaneous push is defined
 - simultaneous push/pop count update
 - pointer wrap
 - FIFO ordering
-
-### Arbiter
-
-Check:
-
-- no grant when no request
-- one-hot or zero-one-hot grant
-- grant stability when protocol requires hold-until-accept
-- fixed priority order or round-robin order
-- round-robin pointer updates only on accepted grant
-- backpressure does not rotate grant early
-- fairness over repeated requests
 
 ### FSM
 
@@ -265,72 +328,47 @@ Check:
 - outputs for each state
 - no unexpected early completion
 
-## WaveDrom Validation
+### Pending / Done-Seen Logic
 
-When validating a WaveDrom scene:
+Check:
 
-1. identify the scenario file
-2. identify the RTL signals drawn
-3. build a tiny directed test for that scenario
-4. drive the same handshake or event sequence
-5. assert the key signal timing
-6. optionally compare generated waveform manually
+- input pulse while busy sets pending
+- pending clears when consumed
+- pending clears when context becomes invalid
+- same-cycle set/clear priority is intentional
+- skewed done pulse is latched until all required sides complete
 
-The test should be named after the WaveDrom scenario:
-
-```text
-waves/rv_stall_hold.wave.json
-sim/tb_rv_stall_hold.cpp
-```
-
-## When Verilator Is Not Suitable
+## 12. When Verilator Is Not Suitable
 
 Use VCS or Xcelium when the design requires:
 
 - UVM class-based testbench
-- unsupported DPI features
 - encrypted vendor IP
 - vendor primitive libraries
 - gate-level netlist with specify/SDF
 - simulator-specific system tasks
 - company run scripts or full project environment
 
-Still keep the directed-test mindset: one scenario, few signals, precise assertion, waveform only when useful.
+Still keep the directed-test mindset:
 
-VCS sketch:
-
-```sh
-vcs -full64 -sverilog -timescale=1ns/1ps \
-  +incdir+./rtl \
-  <rtl_files> \
-  <tb_files> \
-  -o simv
-./simv
+```text
+one scenario
+few signals
+precise assertion
+waveform only when useful
 ```
 
-Xcelium sketch:
-
-```sh
-xrun -64bit -sv \
-  -timescale 1ns/1ps \
-  +incdir+./rtl \
-  <rtl_files> \
-  <tb_files>
-```
-
-Adjust to repository scripts when available.
-
-## Final Report Format
+## 13. Final Report Format
 
 ```markdown
 ## Check Result
 
-| Item | Result | Note |
+| Item | Result | Evidence |
 |---|---|---|
-| Syntax | PASS/FAIL/NOT RUN | ... |
-| Lint | PASS/FAIL/NOT RUN | ... |
-| Directed scenario | PASS/FAIL/NOT RUN | ... |
-| Waveform | generated/not generated | ... |
+| Syntax | PASS/FAIL/NOT RUN | command/output |
+| Lint | PASS/FAIL/NOT RUN | command/output |
+| Scenario | PASS/FAIL/NOT RUN | checked signals |
+| Waveform | generated/not generated | file |
 
 ## Important Findings
 
@@ -341,10 +379,16 @@ Adjust to repository scripts when available.
 ...
 ```
 
-If no command actually ran, state clearly:
+If no command actually ran, say:
 
 ```text
 未实际运行命令；以下是建议命令和预期检查点。
 ```
 
 Never imply the design passed unless a check actually ran.
+
+## 14. Final Principle
+
+The soul of `rtl-check` is not Verilator.
+
+It is using the smallest scenario to prove that a specific fact, event, priority, boundary, or contract is really implemented.
