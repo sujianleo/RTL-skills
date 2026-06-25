@@ -1,8 +1,0 @@
-.DS_Store
-*.log
-*.sqlite
-*.sqlite-*
-*.db
-*.db-*
-node_modules/
-__pycache__/

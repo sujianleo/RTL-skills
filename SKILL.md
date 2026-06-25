@@ -1,0 +1,377 @@
+---
+name: rtl-design
+description: Use when designing, reviewing, or refactoring synthesizable SystemVerilog RTL with timing, state, priority, CDC, FIFO, CSR/IRQ, handshake, FSM, or protocol-control behavior.
+---
+
+# RTL Design
+
+## Core Principle
+
+```text
+Less is more.
+Think from contract before coding.
+Use the smallest structure that exposes the real hardware behavior clearly.
+```
+
+Design flow:
+
+```text
+contract
+  -> events
+  -> remembered facts
+  -> priority
+  -> implementation
+  -> outputs
+  -> corner-case review
+```
+
+Do not add abstraction only to match a template.
+
+When generating module RTL, keep the code synthesizable and compact. Do not add
+SYNTHESIS-guarded blocks, `initial $fatal` parameter checks, assertions, or
+other sim-only guards unless the user explicitly asks for verification logic.
+
+## RTL File Header Rule
+
+When generating SystemVerilog RTL, keep the file header minimal.
+
+Only include:
+
+```text
+module name
+applicable scope / purpose
+```
+
+Preferred:
+
+```systemverilog
+//------------------------------------------------------------------------------
+// <module_name>
+//
+// <one-line applicable scope / purpose>
+//------------------------------------------------------------------------------
+```
+
+Avoid long overview blocks, changelogs, author/version blocks, verbose contracts, or repeated design notes unless explicitly requested.
+
+Keep useful comments near the logic that needs them.
+
+## When to Use
+
+Use for RTL/control logic involving:
+
+```text
+FSM
+handshake
+FIFO / arbiter / queue / pipeline control
+CDC / RDC
+CSR-visible status
+IRQ pulse or pending
+timeout / abort / clear / disable
+protocol sequencing
+PHY direction mapping
+bug analysis or RTL review
+```
+
+Do not use for pure formatting, trivial one-line edits, or simple datapath expressions.
+
+## Design Checklist Before Coding
+
+Identify:
+
+1. **Job**  
+   What does this logic receive, remember, and drive?
+
+2. **Contract**  
+   For each important signal, define pulse/level, owner, valid cycle, clear behavior, clock/reset domain, and observable effect.
+
+3. **Events**  
+   Name current-cycle events such as accept, consume, start, done, timeout, abort, clear.
+
+4. **Remembered facts**  
+   Register only facts that must survive a clock edge: pending, seen, sticky, saved direction, active transaction, timeout active.
+
+5. **Priority**  
+   Define same-cycle priority before coding.
+
+   Typical priority:
+
+   ```text
+   reset
+   > disable / abort / clear / kill
+   > consume / complete
+   > set new event
+   > hold
+   ```
+
+6. **Outputs**  
+   Decide whether each output comes from a current event, registered fact, state, counter, handshake, CSR sticky bit, or protocol encoding.
+
+7. **Corner cases**  
+   Check busy, stall, late input, simultaneous set/clear, timeout, abort, disable, reset release, skewed done, duplicate event, lost pulse, and cross-domain sampling.
+
+## Naming Rules
+
+Keep suffixes minimal. Use suffixes only when they expose timing, ownership, or CDC stage.
+
+| Suffix / Pattern | Meaning | Example |
+|---|---|---|
+| `_i` | input port | `start_i` |
+| `_o` | output port | `done_o` |
+| `_q` | registered value | `state_q` |
+| `_d` | next value for structured logic | `state_d` |
+| `_nxt` | simple candidate next value | `ptr_nxt` |
+| `_fire` | current-cycle event | `accept_fire` |
+| `_pending` | captured unconsumed event | `req_pending_q` |
+| `_sync1_q/_sync2_q` | CDC sync stages | `done_sync1_q`, `done_sync2_q` |
+
+Rules:
+
+- Use `_fire` for combinational current-cycle events.
+- Use `_q` for registered facts.
+- Use `_d` only when real next-value decode improves clarity.
+- Use `_nxt` for simple candidate values such as pointer + 1.
+- Use `_pending` only when an event is captured and waits to be consumed.
+- Use `_sync1_q/_sync2_q` for CDC synchronizer stages.
+- Avoid `_f/_ff` for CDC; they do not show stage order.
+- Prefer semantic names over suffix-heavy names.
+- Do not create alias wires that add no meaning.
+
+## Structure Rule
+
+Use compact structure for simple logic:
+
+```text
+small counter
+simple synchronizer
+classic FIFO pointer logic
+one-condition register update
+simple pulse generation
+```
+
+Use structured logic for complex behavior:
+
+```text
+multi-state FSM
+multi-register priority
+pending / done-seen logic
+CSR / IRQ behavior
+CDC event crossing
+timeout / abort / clear interaction
+protocol sequencing
+```
+
+Avoid:
+
+```text
+empty input decode sections
+one-condition _d logic
+alias wires equal to raw inputs
+comments that restate code
+section headers longer than the logic
+mechanical decomposition of classic structures
+```
+
+Add abstraction only if it gives clearer timing, clearer priority, safer CDC, less repeated complex logic, easier waveform debug, or fewer realistic bugs.
+
+## Event Rule
+
+Pull meaningful current-cycle events into named wires.
+
+```systemverilog
+assign accept_fire  = in_valid_i  && in_ready_o;
+assign consume_fire = out_valid_o && out_ready_i;
+assign timeout_fire = timeout_en_q && (timeout_cnt_q == TIMEOUT_LIMIT);
+assign abort_fire   = abort_pulse_i || timeout_fire;
+```
+
+Do not repeat the same complex raw condition in multiple state, counter, CSR, or IRQ blocks.
+
+## Register Rule
+
+For every important register, know:
+
+```text
+remembered fact
+set condition
+clear condition
+hold condition
+same-cycle priority
+```
+
+For obvious one-condition registers, keep this in reasoning; do not add verbose comments.
+
+## Priority Rule
+
+Name shared cleanup conditions once.
+
+```systemverilog
+assign flow_kill = !enable_i || abort_fire || timeout_fire;
+```
+
+Reuse shared priority conditions consistently in state, pending bits, done-seen bits, counters, CSR sticky status, IRQ generation, and outputs.
+
+If set and clear happen in the same cycle, make the winner explicit.
+
+## CDC Rule
+
+Only cross clock domains with CDC-safe structures.
+
+Allowed patterns:
+
+```text
+single-bit level sync
+toggle event sync
+pulse sync via toggle
+gray pointer sync
+req/ack handshake
+async FIFO pointer sync
+```
+
+Avoid:
+
+```text
+direct multi-bit bus sync
+raw pulse into another clock domain
+combinational CDC paths
+cross-domain payload without handshake or FIFO
+```
+
+Prefer `_sync1_q/_sync2_q` for synchronizer stages.
+
+```systemverilog
+logic done_sync1_q;
+logic done_sync2_q;
+```
+
+CDC comments should state source domain, destination domain, synchronized fact, and why payload is safe or not needed.
+
+## FIFO Rule
+
+For async FIFO/control FIFO:
+
+```text
+binary pointers stay local
+Gray pointers cross domains
+payload is not synchronized bit-by-bit
+full is generated in write clock domain
+empty is generated in read clock domain
+read data timing must be stated
+```
+
+Example contract:
+
+```text
+Write accepts data only on w_push_fire = w_en_i && !w_full_o.
+Read consumes data only on r_pop_fire = r_en_i && !r_empty_o.
+r_data_o updates on r_pop_fire; not FWFT unless explicitly stated.
+Cross-domain flow control synchronizes Gray pointers only.
+```
+
+For dual-clock memory arrays, note that the RTL models dual-clock RAM and may need FPGA/foundry RAM macro replacement.
+
+Do not over-structure classic FIFO code.
+
+## CSR / IRQ Rule
+
+CSR-visible status must be clearly one of:
+
+```text
+live level
+sticky bit
+write-1-clear sticky bit
+read-clear sticky bit
+IRQ pending
+```
+
+For sticky status:
+
+```text
+event domain sets the fact
+software/CSR clear removes it
+clear priority must be explicit
+CDC must be handled before CSR sampling
+```
+
+If CSR clock differs from event clock, do not directly synchronize a multi-bit status bus.
+
+## Reset Rule
+
+Keep async reset branches dedicated to reset values.
+
+Good:
+
+```systemverilog
+always_ff @(posedge clk_i or negedge rst_n_i) begin
+  if (!rst_n_i) begin
+    state_q <= S_IDLE;
+  end else if (flow_kill) begin
+    state_q <= S_IDLE;
+  end else begin
+    state_q <= state_d;
+  end
+end
+```
+
+Bad:
+
+```systemverilog
+always_ff @(posedge clk_i or negedge rst_n_i) begin
+  if (!rst_n_i || flow_kill) begin
+    state_q <= S_IDLE;
+  end else begin
+    state_q <= state_d;
+  end
+end
+```
+
+Do not mix functional clear, abort cleanup, phase-exit cleanup, software clear, or context cleanup into async reset condition.
+
+## Direction Mapping Rule
+
+When physical side and logical direction differ, expose the mapping with named wires.
+
+```systemverilog
+// DPHY_RX observes downstream-side abort, which maps to U2D logical flow.
+assign u2d_abort_fire = dphy_abort_fire;
+
+// UPHY_RX observes upstream-side abort, which maps to D2U logical flow.
+assign d2u_abort_fire = uphy_abort_fire;
+```
+
+Do not hide direction swaps inside sequential assignments.
+
+## Comment Rule
+
+Use comments sparingly.
+
+Good comments explain:
+
+```text
+intent
+contract
+priority reason
+CDC safety
+non-obvious protocol behavior
+```
+
+Bad comments restate the code.
+
+Avoid large section headers and large file headers.
+
+## Final Check
+
+Before finishing, check:
+
+1. Is the contract clear?
+2. Are current-cycle events named?
+3. Are remembered facts stored in `_q` registers?
+4. Is same-cycle priority explicit?
+5. Are pulse/level behaviors clear from contract or names?
+6. Are CDC crossings safe?
+7. Are CSR sticky/live/IRQ behaviors separated?
+8. Are async FIFO pointers/payload handled safely?
+9. Are reset and functional clear separated?
+10. Can a waveform follow input -> event -> fact/state -> output?
+11. Does the code handle busy, stall, timeout, abort, clear, disable, and simultaneous events?
+12. Can any abstraction, alias, comment, or section header be removed without losing clarity?
