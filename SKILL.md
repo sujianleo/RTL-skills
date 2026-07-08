@@ -201,6 +201,47 @@ same-cycle priority
 
 For obvious one-condition registers, keep this in reasoning; do not add verbose comments.
 
+## Sequential Block Grouping Rule
+
+Group sequential logic by fact lifetime and owner, not merely by sharing the
+same clock and reset.
+
+Good grouping:
+
+```text
+state / flow phase facts
+saved type / direction / transaction facts
+pending / seen / done facts
+counter and timer facts
+registered pulse outputs
+CSR-visible status / sticky bits
+debug sticky bits
+```
+
+Each `always_ff` block should answer one clear question, such as:
+
+```text
+What phase is this flow in?
+What protocol fact must survive the clock edge?
+Which one-cycle output pulse is emitted this cycle?
+How does software-visible status set and clear?
+```
+
+Keep registers together when they share the same owner, clear condition,
+lifetime, and priority. Split them when mixing them hides the hardware story or
+makes waveform debug harder.
+
+Avoid:
+
+```text
+one giant clocked block containing unrelated state, counters, pulses, CSR status, and debug bits
+one always_ff per register when the registers are one coherent fact group
+duplicating the same clear/start/done priority in many tiny blocks
+```
+
+Synthesis normally produces the same flops either way; this rule is about
+readability, priority clarity, and reviewability.
+
 ## Priority Rule
 
 Name shared cleanup conditions once.
@@ -372,6 +413,7 @@ Before finishing, check:
 7. Are CSR sticky/live/IRQ behaviors separated?
 8. Are async FIFO pointers/payload handled safely?
 9. Are reset and functional clear separated?
-10. Can a waveform follow input -> event -> fact/state -> output?
-11. Does the code handle busy, stall, timeout, abort, clear, disable, and simultaneous events?
-12. Can any abstraction, alias, comment, or section header be removed without losing clarity?
+10. Are sequential blocks grouped by fact lifetime and owner instead of one unrelated giant block?
+11. Can a waveform follow input -> event -> fact/state -> output?
+12. Does the code handle busy, stall, timeout, abort, clear, disable, and simultaneous events?
+13. Can any abstraction, alias, comment, or section header be removed without losing clarity?
