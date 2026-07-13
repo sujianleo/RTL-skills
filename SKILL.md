@@ -293,6 +293,24 @@ assign abort_fire   = abort_pls_i || timeout_fire;
 
 Do not repeat the same complex raw condition in multiple state, counter, CSR, or IRQ blocks.
 
+### Event Struct Rule
+
+Use a packed event struct only when many parallel current-cycle events share
+one scope, lifetime, and derivation flow, such as symmetric UPHY and DPHY
+protocol events. Name the container `<scope>_evt`, such as `uphy_evt`; fields
+must not repeat that scope, such as `uphy_evt.enter_fire` and
+`uphy_evt.clr_fire`.
+
+Set the struct to `'0` and derive its fields in one staged `always_comb` block
+so each field remains waveform-visible and has one owner. Keep cross-scope
+priority and cleanup facts separate, for example `entry_kill`,
+`cl12_csr_clr_fire`, or direction-mapped IRQ facts.
+
+Do not use an event struct for one obvious event, registered state, sticky
+facts, externally defined ports, or events with different lifetimes, clear
+rules, or ownership. A struct groups related facts; it must not hide their
+timing contract.
+
 ## Combinational Decomposition Rule
 
 Do not hide a multi-phase protocol decision, nested selection, or several
@@ -543,4 +561,5 @@ Before finishing, check:
 11. Can a waveform follow input -> event -> fact/state -> output?
 12. Does the code handle busy, stall, timeout, abort, clear, disable, and simultaneous events?
 13. Are multi-phase combinational decisions decomposed into short, named facts without adding meaningless aliases?
-14. Can any abstraction, alias, comment, or section header be removed without losing clarity?
+14. If an event struct is used, does it contain only same-scope current-cycle events with one staged combinational owner?
+15. Can any abstraction, alias, comment, or section header be removed without losing clarity?
