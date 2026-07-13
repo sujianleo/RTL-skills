@@ -187,6 +187,7 @@ meaning, and project compatibility always win over compression.
 | `_rdy` | ready qualifier | `data_rdy` |
 | `_lvl` | sustained level | `ready_lvl` |
 | `_pls` | one-cycle pulse | `timeout_pls` |
+| `_stk` | sticky fact held until its defined clear | `irq_stk` |
 | `_err` | error level, pulse, or sticky fact | `frame_err` |
 | `_req/_ack` | request and acknowledge handshake | `read_req`, `read_ack` |
 
@@ -219,6 +220,7 @@ Rules:
 - Use the exact short suffixes `_vld`, `_rdy`, `_err`, `_req`, and `_ack` for valid, ready, error, request, and acknowledge signals. Prefer `data_vld`, `data_rdy`, `frame_err`, `read_req`, and `read_ack`; do not expand them to `data_valid`, `data_ready`, `frame_error`, `read_request`, or `read_acknowledge`.
 - Name a ready/valid pair with the same semantic root, such as `in_vld` and `in_rdy`; name its accepted transaction `in_fire = in_vld && in_rdy`.
 - Prefer `_lvl` for a sustained level and `_pls` for a one-cycle pulse, such as `ready_lvl` and `timeout_pls`. Do not force-renaming an external or project-defined `*_level` / `*_pulse` interface merely to shorten it.
+- Use `_stk` for a sticky fact that remains set until its defined clear, such as `irq_stk` or `dbg_timeout_stk`. Do not use `_stk` for a transient event, a live level, or a generic register.
 - Use `cfg_` for configuration ports and `dbg_` for debug or observability ports when those roles are part of the module interface. Keep the remaining name semantic and retain the relevant timing and direction suffix.
 - Avoid `_f/_ff` for CDC; they do not show stage order.
 - Prefer semantic names over suffix-heavy names.
