@@ -189,9 +189,21 @@ meaning, and project compatibility always win over compression.
 | `_rdy` | ready qualifier | `data_rdy` |
 | `_lvl` | sustained level | `ready_lvl` |
 | `_pls` | one-cycle pulse | `timeout_pls` |
-| `_stk` | sticky fact held until its defined clear | `irq_stk` |
+| `_sty` | sticky fact held until its defined clear | `irq_sty` |
 | `_err` | error level, pulse, or sticky fact | `frame_err` |
 | `_req/_ack` | request and acknowledge handshake | `read_req`, `read_ack` |
+
+### Canonical Short Forms
+
+Prefer these established short semantic tokens inside RTL names when the
+project does not mandate an external spelling:
+
+| Meaning | Preferred token | Examples |
+|---|---|---|
+| clear | `clr` | `cfg_clr_pls_i`, `flow_clr_fire` |
+| enable | `en` | `cfg_en_i` |
+| group | `grp` | `dbg_u2d_grp0` |
+| sticky | `sty` | `irq_sty` |
 
 ### Port Prefixes
 
@@ -223,8 +235,9 @@ Rules:
 - Use the exact short suffixes `_vld`, `_rdy`, `_err`, `_req`, and `_ack` for valid, ready, error, request, and acknowledge signals. Prefer `data_vld`, `data_rdy`, `frame_err`, `read_req`, and `read_ack`; do not expand them to `data_valid`, `data_ready`, `frame_error`, `read_request`, or `read_acknowledge`.
 - Name a ready/valid pair with the same semantic root, such as `in_vld` and `in_rdy`; name its accepted transaction `in_fire = in_vld && in_rdy`.
 - Prefer `_lvl` for a sustained level and `_pls` for a one-cycle pulse, such as `ready_lvl` and `timeout_pls`. Do not force-renaming an external or project-defined `*_level` / `*_pulse` interface merely to shorten it.
-- Use `_stk` for a sticky fact that remains set until its defined clear, such as `irq_stk` or `dbg_timeout_stk`. Do not use `_stk` for a transient event, a live level, or a generic register.
-- Treat an IRQ as a one-cycle pulse by default and name it `*_irq_pls`, such as `timeout_irq_pls`. Use `*_irq_stk` or `*_irq_pending` only when the contract explicitly requires an IRQ fact to remain asserted; do not use a bare `*_irq` name.
+- Use `_sty` for a sticky fact that remains set until its defined clear, such as `irq_sty` or `dbg_timeout_sty`. Do not use `_sty` for a transient event, a live level, or a generic register.
+- Treat an IRQ as a one-cycle pulse by default and name it `*_irq_pls`, such as `timeout_irq_pls`. Use `*_irq_sty` or `*_irq_pending` only when the contract explicitly requires an IRQ fact to remain asserted; do not use a bare `*_irq` name.
+- Use `clr`, `en`, and `grp` rather than `clear`, `enable`, and `group` in internally owned names, such as `flow_clr_fire`, `cfg_en_i`, and `dbg_u2d_grp0`. Keep a longer external or project-defined spelling when its interface compatibility matters.
 - Use `cfg_` for configuration ports and `dbg_` for debug or observability ports when those roles are part of the module interface. Keep the remaining name semantic and retain the relevant timing and direction suffix.
 - Avoid `_f/_ff` for CDC; they do not show stage order.
 - Prefer semantic names over suffix-heavy names.
