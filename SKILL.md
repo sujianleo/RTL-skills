@@ -13,17 +13,65 @@ Think from contract before coding.
 Use the smallest structure that exposes the real hardware behavior clearly.
 ```
 
+RTL design translates a timing contract into hardware facts and update rules.
+Do not begin by collecting `always_ff` blocks; first decide what can happen in
+the current cycle, what must survive the edge, and what the outside world can
+observe on each cycle.
+
+Trace every important behavior in both directions:
+
+```text
+input condition
+  -> qualified current-cycle event
+  -> remembered fact or state
+  -> registered update with explicit priority
+  -> observable level, pulse, status, or protocol action
+```
+
+```text
+observable output
+  <- output origin
+  <- remembered fact or state
+  <- set / clear / hold rule
+  <- current-cycle event
+  <- input condition
+```
+
+The first trace prevents accidental hidden state; the second prevents an
+output whose cycle of validity or owner is unclear.
+
 Design flow:
 
 ```text
 contract
-  -> events
-  -> remembered facts
-  -> priority
-  -> implementation
+  -> timing sketch when a cycle boundary is uncertain
+  -> input / events
+  -> remembered facts and same-cycle priority
+  -> register updates
   -> outputs
   -> corner-case review
 ```
+
+## Timing Sketch Rule
+
+For simple local logic, reason through the clock edge directly. For a pulse,
+counter, multi-phase flow, CDC boundary, or any question of "this cycle or next
+cycle", first draw a rough timing sequence in the head, a cycle table, or a
+small waveform. It need not be formal documentation.
+
+The sketch must answer:
+
+```text
+When is the request accepted?
+Which edge captures context or starts a counter?
+When does completion become true?
+Is the output a same-cycle combinational value, a registered level, or a one-cycle pulse?
+If clear, disable, abort, and done coincide, which result wins?
+```
+
+If the answer is not obvious, code is premature. Resolve the timing before
+writing the sequential block; use the resulting waveform to check first/last
+counter cycles, pulse width, skewed inputs, and simultaneous events.
 
 Do not add abstraction only to match a template.
 
