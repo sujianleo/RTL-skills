@@ -180,9 +180,33 @@ meaning, and project compatibility always win over compression.
 | `_q` | registered value | `state_q` |
 | `_d` | next value for structured logic | `state_d` |
 | `_nxt` | simple candidate next value | `ptr_nxt` |
-| `_fire` | current-cycle event | `accept_fire` |
+| `_fire` | qualified current-cycle event | `accept_fire` |
 | `_pending` | captured unconsumed event | `req_pending_q` |
 | `_sync1_q/_sync2_q` | CDC sync stages | `done_sync1_q`, `done_sync2_q` |
+| `_vld` | valid qualifier or valid pulse | `data_vld` |
+| `_rdy` | ready qualifier | `data_rdy` |
+| `_lvl` | sustained level | `ready_lvl` |
+| `_pls` | one-cycle pulse | `timeout_pls` |
+| `_err` | error level, pulse, or sticky fact | `frame_err` |
+| `_req/_ack` | request and acknowledge handshake | `read_req`, `read_ack` |
+
+### Port Prefixes
+
+Use a port prefix when it exposes the interface role, then retain the normal
+semantic body and timing/direction suffix. A prefix does not replace a
+meaningful `_fire`, `_lvl`, `_pls`, `_i`, or `_o` suffix.
+
+| Prefix | Interface role | Examples |
+|---|---|---|
+| `cfg_` | software, strap, or integration configuration that controls behavior | `cfg_enable_i`, `cfg_timeout_i`, `cfg_mode_i` |
+| `dbg_` | debug, trace, or observability interface; not a functional protocol path | `dbg_state_o`, `dbg_timeout_o`, `dbg_force_i` |
+
+Use `cfg_` for values that configure normal operation, not for a runtime
+transaction request or a one-cycle protocol event. Use `dbg_` for diagnostic
+visibility or explicitly debug-only overrides. A debug override must still
+state its timing and direction, for example `dbg_force_i` or
+`dbg_timeout_pls_i`; do not disguise a functional production control as
+debug.
 
 Rules:
 
@@ -192,6 +216,10 @@ Rules:
 - Use `_nxt` for simple candidate values such as pointer + 1.
 - Use `_pending` only when an event is captured and waits to be consumed.
 - Use `_sync1_q/_sync2_q` for CDC synchronizer stages.
+- Use the exact short suffixes `_vld`, `_rdy`, `_err`, `_req`, and `_ack` for valid, ready, error, request, and acknowledge signals. Prefer `data_vld`, `data_rdy`, `frame_err`, `read_req`, and `read_ack`; do not expand them to `data_valid`, `data_ready`, `frame_error`, `read_request`, or `read_acknowledge`.
+- Name a ready/valid pair with the same semantic root, such as `in_vld` and `in_rdy`; name its accepted transaction `in_fire = in_vld && in_rdy`.
+- Prefer `_lvl` for a sustained level and `_pls` for a one-cycle pulse, such as `ready_lvl` and `timeout_pls`. Do not force-renaming an external or project-defined `*_level` / `*_pulse` interface merely to shorten it.
+- Use `cfg_` for configuration ports and `dbg_` for debug or observability ports when those roles are part of the module interface. Keep the remaining name semantic and retain the relevant timing and direction suffix.
 - Avoid `_f/_ff` for CDC; they do not show stage order.
 - Prefer semantic names over suffix-heavy names.
 - Do not create alias wires that add no meaning.
@@ -238,10 +266,10 @@ Add abstraction only if it gives clearer timing, clearer priority, safer CDC, le
 Pull meaningful current-cycle events into named wires.
 
 ```systemverilog
-assign accept_fire  = in_valid_i  && in_ready_o;
-assign consume_fire = out_valid_o && out_ready_i;
+assign accept_fire  = in_vld_i  && in_rdy_o;
+assign consume_fire = out_vld_o && out_rdy_i;
 assign timeout_fire = timeout_en_q && (timeout_cnt_q == TIMEOUT_LIMIT);
-assign abort_fire   = abort_pulse_i || timeout_fire;
+assign abort_fire   = abort_pls_i || timeout_fire;
 ```
 
 Do not repeat the same complex raw condition in multiple state, counter, CSR, or IRQ blocks.
