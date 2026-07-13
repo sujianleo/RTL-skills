@@ -177,8 +177,10 @@ meaning, and project compatibility always win over compression.
 |---|---|---|
 | `_i` | input port | `start_i` |
 | `_o` | output port | `done_o` |
-| `_q` | registered value | `state_q` |
-| `_d` | next value for structured logic | `state_d` |
+| `_q` | registered value | `status_q` |
+| `_d` | next value for structured logic | `data_d` |
+| `c_st/n_st` | current and next single-FSM state | `c_st`, `n_st` |
+| `<scope>_c_st/<scope>_n_st` | current and next state of a named FSM | `uphy_c_st`, `uphy_n_st` |
 | `_nxt` | simple candidate next value | `ptr_nxt` |
 | `_fire` | qualified current-cycle event | `accept_fire` |
 | `_pending` | captured unconsumed event | `req_pending_q` |
@@ -211,6 +213,7 @@ debug.
 
 Rules:
 
+- Name a single FSM's current and next state `c_st` and `n_st`. For multiple FSMs, put the semantic qualifier first: `<scope>_c_st` and `<scope>_n_st`, such as `uphy_c_st` and `uphy_n_st`. Do not use `c_<scope>_st` or `n_<scope>_st`.
 - Use `_fire` for combinational current-cycle events.
 - Use `_q` for registered facts.
 - Use `_d` only when real next-value decode improves clarity.
@@ -455,11 +458,11 @@ Good:
 ```systemverilog
 always_ff @(posedge clk_i or negedge rst_n_i) begin
   if (!rst_n_i) begin
-    state_q <= S_IDLE;
+    c_st <= S_IDLE;
   end else if (flow_kill) begin
-    state_q <= S_IDLE;
+    c_st <= S_IDLE;
   end else begin
-    state_q <= state_d;
+    c_st <= n_st;
   end
 end
 ```
@@ -469,9 +472,9 @@ Bad:
 ```systemverilog
 always_ff @(posedge clk_i or negedge rst_n_i) begin
   if (!rst_n_i || flow_kill) begin
-    state_q <= S_IDLE;
+    c_st <= S_IDLE;
   end else begin
-    state_q <= state_d;
+    c_st <= n_st;
   end
 end
 ```
