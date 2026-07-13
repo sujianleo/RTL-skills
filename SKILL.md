@@ -213,7 +213,7 @@ meaningful `_fire`, `_lvl`, `_pls`, `_i`, or `_o` suffix.
 
 | Prefix | Interface role | Examples |
 |---|---|---|
-| `cfg_` | software, strap, or integration configuration that controls behavior | `cfg_enable_i`, `cfg_timeout_i`, `cfg_mode_i` |
+| `cfg_` | software, strap, or integration configuration that controls behavior | `cfg_en_i`, `cfg_timeout_i`, `cfg_mode_i` |
 | `dbg_` | debug, trace, or observability interface; not a functional protocol path | `dbg_state_o`, `dbg_timeout_o`, `dbg_force_i` |
 
 Use `cfg_` for values that configure normal operation, not for a runtime
@@ -373,7 +373,7 @@ readability, priority clarity, and reviewability.
 Name shared cleanup conditions once.
 
 ```systemverilog
-assign flow_kill = !enable_i || abort_fire || timeout_fire;
+assign flow_kill = !en_i || abort_fire || timeout_fire;
 ```
 
 Reuse shared priority conditions consistently in state, pending bits, done-seen bits, counters, CSR sticky status, IRQ generation, and outputs.
