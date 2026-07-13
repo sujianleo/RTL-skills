@@ -162,6 +162,17 @@ Identify:
 
 Keep suffixes minimal. Use suffixes only when they expose timing, ownership, or CDC stage.
 
+### Affix Compression Preference
+
+Treat short prefixes and suffixes as a preference, not a rule. Before adding an
+affix, check whether an established one to three-letter form expresses the
+meaning clearly, such as `_q`, `_vld`, `_err`, `_req`, or `_ack`.
+
+Keep longer established forms such as `_fire`, `_pending`, and `_nxt` when
+they are clearer; do not invent cryptic abbreviations or rename an externally
+defined port merely to meet a three-letter target. Semantic clarity, timing
+meaning, and project compatibility always win over compression.
+
 | Suffix / Pattern | Meaning | Example |
 |---|---|---|
 | `_i` | input port | `start_i` |
