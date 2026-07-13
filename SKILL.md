@@ -246,6 +246,26 @@ assign abort_fire   = abort_pulse_i || timeout_fire;
 
 Do not repeat the same complex raw condition in multiple state, counter, CSR, or IRQ blocks.
 
+## Combinational Decomposition Rule
+
+Do not hide a multi-phase protocol decision, nested selection, or several
+independent timing conditions inside one long combinational expression. Split
+it into short, causal facts when each fact has its own waveform meaning, such
+as a selected terminal count, elapsed timer, received condition, recovery
+ready, or output owner.
+
+```systemverilog
+assign tx_last       = (tx_mode == TX_CL0S) ? cl0s_last : cl12_last;
+assign tx_elapsed    = tx_cnt >= tx_last;
+assign lfps_done     = lfps_seen || lfps_accept_fire;
+assign tx_done_fire  = tx_on && (tx_timed ? tx_elapsed : lfps_done);
+```
+
+The final event should read like a short timing contract. Do not split a small
+obvious expression or add aliases that merely restate a raw input. There is no
+line-count target: split when the expression hides causality, ownership,
+priority, or a waveform-debug checkpoint.
+
 ## Register Rule
 
 For every important register, know:
@@ -475,4 +495,5 @@ Before finishing, check:
 10. Are sequential blocks grouped by fact lifetime and owner instead of one unrelated giant block?
 11. Can a waveform follow input -> event -> fact/state -> output?
 12. Does the code handle busy, stall, timeout, abort, clear, disable, and simultaneous events?
-13. Can any abstraction, alias, comment, or section header be removed without losing clarity?
+13. Are multi-phase combinational decisions decomposed into short, named facts without adding meaningless aliases?
+14. Can any abstraction, alias, comment, or section header be removed without losing clarity?
