@@ -221,6 +221,7 @@ Rules:
 - Name a ready/valid pair with the same semantic root, such as `in_vld` and `in_rdy`; name its accepted transaction `in_fire = in_vld && in_rdy`.
 - Prefer `_lvl` for a sustained level and `_pls` for a one-cycle pulse, such as `ready_lvl` and `timeout_pls`. Do not force-renaming an external or project-defined `*_level` / `*_pulse` interface merely to shorten it.
 - Use `_stk` for a sticky fact that remains set until its defined clear, such as `irq_stk` or `dbg_timeout_stk`. Do not use `_stk` for a transient event, a live level, or a generic register.
+- Treat an IRQ as a one-cycle pulse by default and name it `*_irq_pls`, such as `timeout_irq_pls`. Use `*_irq_stk` or `*_irq_pending` only when the contract explicitly requires an IRQ fact to remain asserted; do not use a bare `*_irq` name.
 - Use `cfg_` for configuration ports and `dbg_` for debug or observability ports when those roles are part of the module interface. Keep the remaining name semantic and retain the relevant timing and direction suffix.
 - Avoid `_f/_ff` for CDC; they do not show stage order.
 - Prefer semantic names over suffix-heavy names.
