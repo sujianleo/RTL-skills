@@ -1,6 +1,6 @@
 ---
 name: rtl-design
-description: Design, debug, review, or refactor non-trivial synthesizable SystemVerilog RTL involving cycle timing, FSMs, ready/valid or req/ack handshakes, CDC/RDC, FIFOs, CSR/IRQ, counters, pipelines, protocol control, problem decomposition, or reusable component selection. Use for behavior and architecture work; do not use for formatting-only edits, trivial one-line datapath expressions, or testbench-only requests.
+description: Design, debug, review, or refactor non-trivial synthesizable SystemVerilog RTL involving cycle timing, FSMs, ready/valid or req/ack handshakes, CDC/RDC, FIFOs, CSR/IRQ, counters, pipelines, protocol control, functional-block decomposition, or reusable component selection. Use for behavior and architecture work; do not use for formatting-only edits, trivial one-line datapath expressions, or testbench-only requests.
 ---
 
 # RTL Design
@@ -58,9 +58,9 @@ completely before editing RTL:
   events, event structs, event-owned register groups, long combinational logic,
   FSM layout, or source-order refactors.
 - Read [decomposition-components.md](references/decomposition-components.md)
-  before splitting a large requirement into smaller modules or selecting,
-  creating, or reusing standard counters, edge detectors, digital filters,
-  pulse helpers, arbiters, buffers, or other control components.
+  before splitting a large requirement into clear functional blocks or
+  selecting, creating, or reusing standard counters, edge detectors, digital
+  filters, pulse helpers, arbiters, buffers, or other control structures.
 - Read [control-correctness.md](references/control-correctness.md) for
   ready/valid, req/ack, pipelines, combinational completeness, arithmetic
   widths, counters, clock enables, or parameterized control logic.
@@ -75,8 +75,9 @@ completely before editing RTL:
 Before coding, define:
 
 1. **Job** — what the module receives, remembers, and drives.
-2. **Decomposition** — smaller timing contracts and existing standard
-   components that can own them without changing latency or priority.
+2. **Decomposition** — smaller timing contracts and clear standard functional
+   blocks that can own them without changing latency or priority. Keep these
+   blocks in the same module by default; decide on submodule extraction later.
 3. **Contract** — pulse/level meaning, owner, valid cycle, clock/reset domain,
    clear behavior, latency, and observable effect.
 4. **Timing** — acceptance edge, context capture, first/last counter cycle,
@@ -96,21 +97,34 @@ When a cycle boundary is uncertain, draw a mental waveform, cycle table, or
 small WaveDrom before coding. Resolve whether each output is same-cycle
 combinational, registered, sustained, or a one-cycle pulse.
 
-## Problem Decomposition and Standard Components
+## Problem Decomposition and Standard Functional Blocks
 
 Break a large requirement into smaller problems with independent, testable
-timing contracts. Define each part's inputs, outputs, owner, latency,
-clock/reset domain, configuration, clear behavior, and failure behavior before
-choosing a module boundary.
+timing contracts. A "standard component" normally means a recognizable local
+hardware block—counter, timer, edge detector, filter, arbiter, buffer, or
+protocol phase—not automatically a separate SystemVerilog module. Define each
+block's inputs, outputs, owner, latency, clock/reset domain, configuration,
+clear behavior, and failure behavior before considering a module boundary.
+
+Implement clear functional blocks inside the owning module by default. Give
+each block a short purpose comment, meaningful events/facts, and a coherent
+`always_ff`, `always_comb`, helper function, or small assignment group. The
+reader should be able to see what the block does and how it connects to the
+next block without crossing file boundaries.
 
 Search the repository for an approved component before writing new logic.
 Prefer proven counters/timers, edge detectors, digital filters or deglitchers,
 synchronizers, pulse synchronizers/stretchers, FIFOs, skid/elastic buffers, and
-arbiters when their contracts match the requirement.
+arbiters when their contracts match the requirement. Reusing an existing
+approved module is a separate decision from decomposing the behavior into
+functional blocks.
 
-Do not force every small expression into a submodule. Keep a one-condition
-local counter or edge qualification inline when extraction would add wiring
-without reuse, independent verification, or a clearer timing boundary.
+Do not default to creating submodules. Keep a local counter, edge detector,
+filter, decoder, or protocol-phase block inline when its state and priority
+belong to the parent module. Extract a submodule only when the user or project
+requires it, an approved reusable implementation already exists, or there is a
+real reuse, independent-interface, CDC/IP, or verification boundary that
+outweighs the added wiring and file navigation.
 
 Never let component reuse silently change cycle latency, reset behavior,
 same-cycle priority, saturation/wrap behavior, or CDC safety. Synchronize an
@@ -159,6 +173,11 @@ module. Use short section labels such as:
 Use the shortest semantic name that remains unambiguous. Public/project-defined
 names always win over this default.
 
+- For new ordinary module ports, put direction first: `i_<meaning>` for inputs
+  and `o_<meaning>` for outputs, such as `i_pclk`, `i_data_vld`, `o_data_rdy`,
+  and `o_done_pls`. Do not use trailing `*_i`/`*_o` or mix both styles on new
+  ordinary ports. Preserve an existing public/project interface when it already
+  mandates a different convention.
 - Use `c_st/n_st` for one FSM and `<scope>_c_st/<scope>_n_st` for multiple
   FSMs. Do not use `c_<scope>_st`, `n_<scope>_st`, or `state_q/state_d`.
 - Reserve `_q/_q2` for CDC synchronizer stage order; do not add `_q` to
@@ -168,7 +187,9 @@ names always win over this default.
 - Use `_pending` only for a captured unconsumed event.
 - Prefer `_vld`, `_rdy`, `_err`, `_req`, `_ack`, `_lvl`, `_pls`, and `_sty`.
 - Prefer `clr`, `en`, and `grp` in internally owned names.
-- Use `cfg_` for configuration and `dbg_` for debug/observability interfaces.
+- `cfg_` and `dbg_` are leading-prefix exceptions: use `cfg_en`, `cfg_mode`,
+  `dbg_force`, and `dbg_state`, without an `i_` or `o_` prefix. Their direction
+  remains explicit in the port declaration.
 - Avoid `_prev`, `reg_`, `r_`, `wire_`, `w_`, and stacked suffixes unless the
   contract truly needs them.
 - Determine IRQ pulse, pending, sticky, or level behavior from the interface
@@ -276,7 +297,10 @@ Before finishing, confirm:
 6. Complex logic is split only at meaningful waveform checkpoints.
 7. Busy, stall, timeout, abort, clear, disable, and simultaneous events were
    considered.
-8. Large behavior was decomposed at real timing boundaries and existing
-   verified components were reused where their contracts matched.
-9. Required syntax, lint, directed tests, component tests, equivalence checks,
-   and regression were run or explicitly reported as not run.
+8. Large behavior was decomposed into clear local functional blocks at real
+   timing boundaries; any extracted submodule has an explicit justification.
+9. Existing verified modules were reused only where their exact contracts
+   matched.
+10. Required syntax, lint, directed tests, extracted-component tests,
+    equivalence checks, and regression were run or explicitly reported as not
+    run.

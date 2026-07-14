@@ -10,6 +10,10 @@ greenfield names.
 
 | Form | Meaning | Example |
 |---|---|---|
+| `i_<name>` | default input module port | `i_pclk`, `i_data_vld` |
+| `o_<name>` | default output module port | `o_data_rdy`, `o_done_pls` |
+| `cfg_<name>` | configuration port exception | `cfg_en`, `cfg_mode` |
+| `dbg_<name>` | debug/observability port exception | `dbg_force`, `dbg_state` |
 | no suffix | ordinary internal fact/register | `busy`, `baud_cnt` |
 | `c_st/n_st` | current/next state of one FSM | `c_st`, `n_st` |
 | `<scope>_c_st/<scope>_n_st` | named FSM pair | `uphy_c_st`, `uphy_n_st` |
@@ -26,8 +30,16 @@ greenfield names.
 ## Rules
 
 - Use the shortest semantic name that remains unambiguous.
-- Add `_i/_o` only when required by project style or needed to make a public
-  direction clear. Do not rename a compatible external interface for style.
+- For new ordinary module ports, use `i_<meaning>` for inputs and
+  `o_<meaning>` for outputs. Put direction before timing meaning, such as
+  `i_data_vld` and `o_done_pls`.
+- `cfg_` and `dbg_` are exceptions: keep them at the absolute beginning of a
+  port name and do not prepend `i_` or `o_`. Use `cfg_en`, `cfg_mode`,
+  `dbg_force`, `dbg_state`, and `dbg_timeout_pls`; direction stays in the
+  SystemVerilog port declaration.
+- Do not use trailing `*_i`/`*_o`, or mix leading and trailing direction forms,
+  on new ports. Preserve a compatible existing public/project interface rather
+  than renaming it for style.
 - Use `c_st/n_st` for one FSM. Put the qualifier before `c_st/n_st` for
   multiple FSMs. Do not use `c_<scope>_st`, `n_<scope>_st`,
   `state_q/state_d`, or `c_state/n_state`.
@@ -41,13 +53,17 @@ greenfield names.
 - Use exact short forms `_vld`, `_rdy`, `_err`, `_req`, and `_ack`; do not
   expand internally owned names to `valid`, `ready`, `error`, `request`, or
   `acknowledge` unless a public interface requires it.
-- Use `_lvl` for sustained levels and `_pls` for one-cycle pulses. Keep
-  project-defined `*_level_i/o` and `*_pulse_i/o` unchanged.
+- Use `_lvl` for sustained levels and `_pls` for one-cycle pulses. For ordinary
+  ports write `i_busy_lvl` or `o_done_pls`; for debug ports write
+  `dbg_done_pls`. Keep project-defined `*_level_i/o` and `*_pulse_i/o`
+  unchanged.
 - Use `_sty` only for a sticky fact with a defined clear.
 - Prefer `clr`, `en`, and `grp` in internally owned names.
 - Avoid `_prev`. Keep a previous-value register only when the contract truly
   requires edge detection and state/level qualification cannot express it.
-- Avoid `reg_`, `r_`, `wire_`, `w_`, and redundant `in_/out_` prefixes.
+- Avoid `reg_`, `r_`, `wire_`, `w_`, and long `in_/out_` prefixes. `i_/o_`
+  are the required short direction prefixes for new ordinary ports; `cfg_/dbg_`
+  replace them for configuration and debug ports.
 - Avoid cryptic abbreviations merely to force every affix below three letters.
 
 ## IRQ Naming
@@ -65,13 +81,15 @@ from a pending/sticky interrupt when both exist.
 ## Interface Prefixes
 
 - Use `cfg_` for software, strap, or integration configuration that controls
-  normal operation, such as `cfg_en_i` or `cfg_mode_i`.
+  normal operation, at the start of the port name, such as `cfg_en` or
+  `cfg_mode`. Do not prepend `i_` or `o_`.
 - Use `dbg_` for debug, trace, observability, or explicitly debug-only
-  overrides, such as `dbg_state_o` or `dbg_force_i`.
+  overrides, at the start of the port name, such as `dbg_state` or
+  `dbg_force`. Do not prepend `i_` or `o_`.
 - Do not disguise a runtime protocol request as `cfg_` or a functional
   production control as `dbg_`.
-- Retain timing and direction meaning after the prefix, such as
-  `dbg_timeout_pls_i`.
+- Retain timing and interface-role meaning after the prefix, such as
+  `dbg_timeout_pls`.
 
 ## Alignment
 
