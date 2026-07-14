@@ -331,6 +331,16 @@ obvious expression or add aliases that merely restate a raw input. There is no
 line-count target: split when the expression hides causality, ownership,
 priority, or a waveform-debug checkpoint.
 
+Keep a simple, single-meaning continuous assignment on one line. Do not wrap
+an obvious comparison, ternary, conjunction, or packing expression merely to
+add visual structure. Split only when the expression hides causality,
+ownership, priority, or a waveform-debug checkpoint.
+
+Within a short related group, align declarations and simple continuous
+assignments by type, name, `=`, or `<=` to make comparison easy. Do not add
+padding to force long or multi-stage expressions into a visual column; retain
+their causal layout instead.
+
 ## Register Rule
 
 For every important register, know:
