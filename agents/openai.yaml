@@ -1,0 +1,4 @@
+interface:
+  display_name: "RTL Design"
+  short_description: "Design, debug, and review synthesizable RTL"
+  default_prompt: "Use $rtl-design to design, debug, review, or refactor non-trivial synthesizable SystemVerilog RTL."
