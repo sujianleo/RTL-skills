@@ -45,10 +45,11 @@ Design flow:
 ```text
 contract
   -> timing sketch when a cycle boundary is uncertain
+  -> captured input context when inputs have pipeline/register boundaries
   -> input / events
   -> remembered facts and same-cycle priority
   -> register updates
-  -> outputs
+  -> output encoding / output boundary
   -> corner-case review
 ```
 
@@ -280,6 +281,25 @@ mechanical decomposition of classic structures
 
 Add abstraction only if it gives clearer timing, clearer priority, safer CDC, less repeated complex logic, easier waveform debug, or fewer realistic bugs.
 
+## Single-Pass Reading Rule
+
+Arrange a non-trivial module so a reader can follow its hardware story without
+jumping backward: captured input payload and mode context first, then
+current-cycle events, remembered facts, and outputs.
+
+```text
+static helpers
+  -> input context capture
+  -> input / events
+  -> register updates
+  -> outputs / output pipeline
+```
+
+Use one short `// Flow:` comment near executable logic only when it materially
+clarifies the path. Put static lookup tables and local helper functions before
+that flow; place input and output pipeline boundaries beside the logic they
+serve. Do not add aliases or comments to small local logic.
+
 ## Event Rule
 
 Pull meaningful current-cycle events into named wires.
@@ -330,6 +350,12 @@ The final event should read like a short timing contract. Do not split a small
 obvious expression or add aliases that merely restate a raw input. There is no
 line-count target: split when the expression hides causality, ownership,
 priority, or a waveform-debug checkpoint.
+
+Keep fixed mathematical transforms and lookup-style logic compact when their
+individual terms have no independent timing meaning, such as an LFSR
+polynomial, CRC parity equation, or constant decode table. Split their
+surrounding protocol selection and completion conditions instead; named facts
+must reveal a real waveform checkpoint, not just shorten a line.
 
 Keep a simple, single-meaning continuous assignment on one line. Do not wrap
 an obvious comparison, ternary, conjunction, or packing expression merely to
