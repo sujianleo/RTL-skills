@@ -1,6 +1,6 @@
 ---
 name: rtl-design
-description: Design, debug, review, or refactor non-trivial synthesizable SystemVerilog RTL involving cycle timing, FSMs, ready/valid or req/ack handshakes, CDC/RDC, FIFOs, CSR/IRQ, counters, pipelines, or protocol control. Use for behavior and architecture work; do not use for formatting-only edits, trivial one-line datapath expressions, or testbench-only requests.
+description: Design, debug, review, or refactor non-trivial synthesizable SystemVerilog RTL involving cycle timing, FSMs, ready/valid or req/ack handshakes, CDC/RDC, FIFOs, CSR/IRQ, counters, pipelines, protocol control, problem decomposition, or reusable component selection. Use for behavior and architecture work; do not use for formatting-only edits, trivial one-line datapath expressions, or testbench-only requests.
 ---
 
 # RTL Design
@@ -57,6 +57,10 @@ completely before editing RTL:
 - Read [event-structure.md](references/event-structure.md) for many input
   events, event structs, event-owned register groups, long combinational logic,
   FSM layout, or source-order refactors.
+- Read [decomposition-components.md](references/decomposition-components.md)
+  before splitting a large requirement into smaller modules or selecting,
+  creating, or reusing standard counters, edge detectors, digital filters,
+  pulse helpers, arbiters, buffers, or other control components.
 - Read [control-correctness.md](references/control-correctness.md) for
   ready/valid, req/ack, pipelines, combinational completeness, arithmetic
   widths, counters, clock enables, or parameterized control logic.
@@ -71,24 +75,51 @@ completely before editing RTL:
 Before coding, define:
 
 1. **Job** — what the module receives, remembers, and drives.
-2. **Contract** — pulse/level meaning, owner, valid cycle, clock/reset domain,
+2. **Decomposition** — smaller timing contracts and existing standard
+   components that can own them without changing latency or priority.
+3. **Contract** — pulse/level meaning, owner, valid cycle, clock/reset domain,
    clear behavior, latency, and observable effect.
-3. **Timing** — acceptance edge, context capture, first/last counter cycle,
+4. **Timing** — acceptance edge, context capture, first/last counter cycle,
    completion cycle, and simultaneous-event priority.
-4. **Events** — meaningful current-cycle facts such as `accept_fire`, done,
+5. **Events** — meaningful current-cycle facts such as `accept_fire`, done,
    timeout, abort, clear, and consume.
-5. **Remembered facts** — only information that must survive an edge: state,
+6. **Remembered facts** — only information that must survive an edge: state,
    pending, seen, saved context, sticky status, or active transaction.
-6. **Priority** — reset, disable/abort/clear, completion/consume, new event,
+7. **Priority** — reset, disable/abort/clear, completion/consume, new event,
    and hold, adjusted to the actual contract.
-7. **Outputs** — the exact event, register, state, counter, or encoding that
+8. **Outputs** — the exact event, register, state, counter, or encoding that
    owns every observable signal.
-8. **Corners** — busy, stall, timeout, abort, disable, simultaneous set/clear,
+9. **Corners** — busy, stall, timeout, abort, disable, simultaneous set/clear,
    reset release, skewed inputs, duplicate events, and counter boundaries.
 
 When a cycle boundary is uncertain, draw a mental waveform, cycle table, or
 small WaveDrom before coding. Resolve whether each output is same-cycle
 combinational, registered, sustained, or a one-cycle pulse.
+
+## Problem Decomposition and Standard Components
+
+Break a large requirement into smaller problems with independent, testable
+timing contracts. Define each part's inputs, outputs, owner, latency,
+clock/reset domain, configuration, clear behavior, and failure behavior before
+choosing a module boundary.
+
+Search the repository for an approved component before writing new logic.
+Prefer proven counters/timers, edge detectors, digital filters or deglitchers,
+synchronizers, pulse synchronizers/stretchers, FIFOs, skid/elastic buffers, and
+arbiters when their contracts match the requirement.
+
+Do not force every small expression into a submodule. Keep a one-condition
+local counter or edge qualification inline when extraction would add wiring
+without reuse, independent verification, or a clearer timing boundary.
+
+Never let component reuse silently change cycle latency, reset behavior,
+same-cycle priority, saturation/wrap behavior, or CDC safety. Synchronize an
+asynchronous input before synchronous edge detection. Define a digital filter's
+sample rate, qualification rule, threshold, assertion/deassertion latency, and
+glitch model.
+
+Read [decomposition-components.md](references/decomposition-components.md) for
+the decomposition method and standard-component contracts.
 
 ## Source Order and Single-Pass Reading
 
@@ -245,5 +276,7 @@ Before finishing, confirm:
 6. Complex logic is split only at meaningful waveform checkpoints.
 7. Busy, stall, timeout, abort, clear, disable, and simultaneous events were
    considered.
-8. Required syntax, lint, directed tests, equivalence checks, and regression
-   were run or explicitly reported as not run.
+8. Large behavior was decomposed at real timing boundaries and existing
+   verified components were reused where their contracts matched.
+9. Required syntax, lint, directed tests, component tests, equivalence checks,
+   and regression were run or explicitly reported as not run.
