@@ -207,6 +207,12 @@ current-cycle events and datapath candidates. Keep the derivation in dependency
 order. Only minimal input-boundary capture or filter registers belong here;
 place functional state, remembered flow context, counters, sticky facts, and
 output registers in `Register Update`.
+When `Input Decode` contains several causal steps, divide it with short normal
+`//` group comments such as input filtering, effective context, start events,
+timing terminals, completion events, and clear events. Keep each group in
+dependency order and do not create more numbered flow sections for these local
+steps. Skip a group comment when the entire decode remains obvious as one small
+assignment group.
 Keep the two `//!` header lines adjacent, then leave exactly one blank line
 after the divider before the section's local comment, declaration, or logic.
 Use blank lines between primary flow stages and independent local blocks. One
@@ -266,10 +272,15 @@ In every `always_comb`, assign every written signal on every path. Set defaults
 before conditional overrides. Use `always_latch` only when a latch is an
 intentional part of the contract.
 
-Place one short English purpose comment immediately above each non-obvious or
-complex `always_comb` block. State what data, event, or next-state result the
-block derives; do not narrate its statements. Do not add a comment above an
-obvious bypass, short mux, or simple assignment block.
+Place an English explanation immediately above each non-obvious or complex
+combinational block, including a long continuous-assignment group or complex
+`always_comb`. Make it detailed enough to identify the input qualification,
+causal dependency or priority, and the event, candidate, or next-state result
+being produced. Use one concise line when that is sufficient and a few short
+lines when the timing or priority would otherwise remain hidden; do not narrate
+statements line by line. An obvious comparison, direct connection, short mux,
+simple packing expression, or small single-purpose assignment group may pass
+without a comment.
 
 During a rule check, keep every short single-meaning combinational expression
 on one physical line when it remains clear. Do not split a simple comparison,
@@ -385,3 +396,6 @@ Before finishing, confirm:
    run.
 12. Numbered flow sections are continuous, ordered, unique, non-empty, and all
     module-scope internal signal declarations are owned by `0. Helper`.
+13. Long Input Decode chains have concise causal group comments, and every
+    complex combinational block explains qualification, dependency or priority,
+    and its produced result; simple combinational logic is not over-commented.
