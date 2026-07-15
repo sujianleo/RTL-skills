@@ -282,6 +282,13 @@ statements line by line. An obvious comparison, direct connection, short mux,
 simple packing expression, or small single-purpose assignment group may pass
 without a comment.
 
+Apply the same rule inside every `always_*` block. When a nested condition,
+case branch group, ternary, or expression combines non-obvious qualification,
+priority, ownership, or same-cycle behavior, place a concise comment directly
+before that decision group. Explain why the condition exists and which result
+wins; do not comment each simple branch, reset assignment, counter increment,
+or obvious direct update.
+
 During a rule check, keep every short single-meaning combinational expression
 on one physical line when it remains clear. Do not split a simple comparison,
 single-purpose ternary, packing expression, or short function call only for
@@ -396,6 +403,7 @@ Before finishing, confirm:
    run.
 12. Numbered flow sections are continuous, ordered, unique, non-empty, and all
     module-scope internal signal declarations are owned by `0. Helper`.
-13. Long Input Decode chains have concise causal group comments, and every
-    complex combinational block explains qualification, dependency or priority,
-    and its produced result; simple combinational logic is not over-commented.
+13. Long Input Decode chains have concise causal group comments, and complex
+    combinational logic both outside and inside every `always_*` explains its
+    qualification, dependency or priority, and produced result; simple logic is
+    not over-commented.
