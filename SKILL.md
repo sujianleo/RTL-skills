@@ -159,14 +159,16 @@ pipeline itself owns the output boundary and has no hidden priority dependency
 on an earlier register group.
 
 Use one short `// Flow:` comment only when it materially clarifies a large
-module. Use short section labels such as:
+module. For a primary RTL section, use a two-line comment partition where the
+divider reaches at least the end of the label:
 
 ```systemverilog
 // Input events
-// Register updates
-// FSM
-// Outputs
+// ------------
 ```
+
+Keep the label short and factual. The divider is part of the section label,
+not a decorative separator: do not use a shorter line or a standalone divider.
 
 ## Naming Core
 
