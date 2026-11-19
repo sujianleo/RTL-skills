@@ -1,86 +1,65 @@
 # CDC, RDC, and Async FIFO
 
-## CDC Selection
+## Crossing Selection
 
-Choose a crossing structure from the signal contract:
+| Crossed fact | Structure |
+|---|---|
+| Stable single-bit level | Two-flop synchronizer |
+| Sparse pulse or event | Toggle or pulse synchronizer with a defined event rate, or req/ack |
+| Coherent multi-bit payload | Handshake-held payload or async FIFO |
+| Counter or pointer advancing one Gray step at a time | Gray encoding with local decode |
 
-- stable single-bit level: two-flop synchronizer
-- one-cycle or sparse event: toggle/pulse synchronizer or req/ack handshake
-- coherent multi-bit payload: handshake-held payload or async FIFO
-- continuously changing counter/pointer: Gray encoding with local decode
+Never send a raw pulse or combinational path across an unrelated clock domain,
+or synchronize a payload bus bit by bit. For a held payload, synchronize the
+control and keep the source payload stable from request launch until
+acknowledgement returns. If the relative arrival cycle matters, cross the
+combined fact through one protocol or verify tolerance of all legal skew,
+including loss of same-cycle alignment. Add only project-approved synchronizer
+attributes required by the flow.
 
-Never directly synchronize a multi-bit bus bit-by-bit, feed a raw pulse into an
-unrelated clock domain, or create a combinational CDC path.
+## Reset Domains
 
-Name two synchronizer stages with the semantic root plus `_q/_q2`, such as
-`done_q/done_q2`. Do not use `_q` for ordinary registers. Add project-approved
-CDC attributes only when required by the flow.
+- Follow the project reset architecture. Use asynchronous assertion only
+  where the design and library support it. Synchronize deassertion in each
+  receiving domain using that domain's own clock. Never reuse another
+  domain's synchronized release. Keep
+  [functional clears](csr-reset-direction.md#functional-clear) synchronous.
+- Analyze logic across different resets even on one clock. Prevent false
+  events when independently reset facts reconverge during assertion or
+  release. Define what happens to pending handshakes, toggles, and pointers
+  when one side resets while the other keeps running. Exercise this case in
+  both directions when the design permits independent reset.
+- In a classic async FIFO, resetting one pointer while the other side runs
+  invalidates the contents. Define any-side reset as a FIFO-wide flush, or use
+  a cross-domain flush/epoch handshake that blocks push and pop until both
+  sides reinitialize. A synchronized `reset_done` may reopen traffic only if
+  it is proven to belong to the current reset epoch.
 
-For a handshake-held payload, keep the source payload stable from request
-launch until destination acknowledgement returns. Synchronize control, not
-each payload bit.
+## Classic Gray-Pointer FIFO
 
-Avoid reconverging separately synchronized signals when their relative arrival
-cycle matters. Cross the combined fact through one protocol or tolerate and
-verify all legal skew.
-
-## RDC and Reset Release
-
-- Follow the repository reset architecture first.
-- Permit asynchronous assertion only where the design and library support it.
-- Deassert an asynchronous reset synchronously in every receiving clock domain.
-- Do not reuse one domain's synchronized reset release in an unrelated clock
-  domain.
-- Analyze logic driven by different resets even when clocks are identical.
-- Prevent independently reset facts from reconverging into a false event during
-  assertion or release.
-- Define what happens to pending handshakes, toggles, and FIFO pointers when one
-  side resets while the other continues running.
-
-A classic async FIFO cannot preserve data consistency when only one pointer
-domain resets to zero while the other keeps operating. Define any-side reset as
-a FIFO-wide flush, or add a cross-domain flush/epoch request-ack protocol that
-blocks push/pop until both domains have reinitialized. Do not reopen traffic
-from one independently synchronized `reset_done` level without proving that it
-belongs to the current reset epoch.
-
-Keep functional clear, abort, disable, phase cleanup, and software clear out of
-the asynchronous reset expression.
-
-## Async FIFO
-
-Use local binary pointers for address/arithmetic and Gray pointers for crossing.
-Use an extra pointer bit for wrap tracking. Generate full in the write domain
-from synchronized read Gray pointer; generate empty in the read domain from
-synchronized write Gray pointer.
-
-For the classic Gray full comparison, compare the next write Gray pointer with
-the synchronized read Gray pointer after inverting its two most-significant
-bits. Handle minimum-depth slice boundaries explicitly; do not implement this
-as a blind negative-width part-select.
-
-For the classic Gray full test, require a power-of-two depth and document that
-constraint. Do not silently apply the classic pointer equations to arbitrary
-depths.
-
-Define:
+Require and document a power-of-two depth. Use local binary pointers for
+addresses and arithmetic, and Gray pointers with an extra wrap bit for
+crossing. Generate full in the write domain by comparing the next write Gray
+pointer with the synchronized
+read Gray pointer with its top two bits inverted. Generate empty in the read
+domain from the synchronized write Gray pointer. Handle minimum-depth slices
+without invalid part-selects.
 
 ```text
 w_push_fire = w_en && !w_full
 r_pop_fire  = r_en && !r_empty
 ```
 
-Write memory only on `w_push_fire`; advance local pointers only on their fire
-events. State whether read data is registered-on-pop, first-word fall-through,
-or combinational. Verify empty read, full write, simultaneous traffic, wrap,
-near-full/near-empty, and independent reset release.
+Write memory only on `w_push_fire`. Advance each local pointer only on its
+corresponding event during normal operation.
+Specify registered-on-pop, fall-through, or combinational read behavior.
+Use the target's dual-clock RAM model or inference rules for payload. Verify
+empty read, full write, simultaneous traffic, wrap, near-full/near-empty,
+and independent reset release.
 
-Do not synchronize payload bits. Treat the memory array as a dual-clock RAM
-model and replace/infer it according to the target FPGA or foundry flow.
+## Crossing Evidence
 
-## Required Documentation and Checks
-
-For each crossing, record source domain, destination domain, crossed fact,
-chosen mechanism, payload stability assumption, reset behavior, and why
-reconvergence is safe. Run the project's CDC/RDC analysis when available; lint
-and simulation alone do not prove crossing safety.
+For each crossing, record source and destination domains, crossed fact,
+mechanism, payload stability, reset behavior, and reconvergence reasoning.
+Run project CDC/RDC analysis when available. Lint and simulation alone do not
+prove crossing safety.
